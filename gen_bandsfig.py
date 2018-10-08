@@ -1,17 +1,16 @@
+from mendeleev import element
 import numpy as np
 
 from pymatgen.ext.matproj import MPRester
 from pymatgen.io.vasp.outputs import Vasprun
 from pymatgen.core.periodic_table import Element
 from pymatgen.electronic_structure.core import Spin, OrbitalType
-from pymatgen.electronic_structure.plotter import BSPlotter, BSPlotterProjected
+from pymatgen.electronic_structure.plotter import BSPlotter
 
 import plotly.plotly as pltly      ## plotting functions
 import plotly.tools as tls         ## plotly tools
 import plotly.graph_objs as go     ## plot and configuration tools : Scatter, Line, Layout
 from plotly import offline
-
-from mendeleev import element
 
 
 class BandsFig:

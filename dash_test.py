@@ -1,17 +1,17 @@
+import json
 import numpy as np
-
-import dash, json
-import dash_core_components as dcc
-import dash_html_components as html
-from dash.dependencies import Input, Output, State
 
 from pymatgen.ext.matproj import MPRester
 from pymatgen.io.vasp.outputs import Vasprun
-from pymatgen.electronic_structure.dos import CompleteDos, _get_orb_type
+from pymatgen.electronic_structure.dos import CompleteDos
 from pymatgen.electronic_structure.bandstructure import BandStructureSymmLine
 
 import plotly.tools as tls
-tls.set_credentials_file(username='annemarietan', api_key='373kEaPah9OkvR1HbBha')
+
+import dash
+import dash_core_components as dcc
+import dash_html_components as html
+from dash.dependencies import Input, Output, State
 
 from gen_structfig import StructFig
 from gen_bandsfig import BandsFig
@@ -28,22 +28,9 @@ class MyEncoder(json.JSONEncoder):
             return obj.tolist()
         else:
             return super(MyEncoder, self).default(obj)
-
-## query materials project
-## but I can't seem to get the projected band info...
-#mpr = MPRester("tnS76clmyw18JNre")
-#dos = mpr.get_dos_by_material_id("mp-149")
-#bs = mpr.get_bandstructure_by_material_id("mp-149") ## Si 
-
-## use local test dataset
-#folder = "../bandstructureplots_Vallverdu/Si_bands/"
-#structure = Vasprun(folder+"Bandes/vasprun.xml").structures[-1]
-#dos = Vasprun(folder+"DOS/vasprun.xml").complete_dos
-#bands = Vasprun(folder+"Bandes/vasprun.xml", parse_projected_eigen = True)
-#bs = bands.get_band_structure(folder+"Bandes/KPOINTS", line_mode=True, efermi=dos.efermi)
-
-
-## now let's try putting it together with other dash components
+        
+        
+tls.set_credentials_file(username='annemarietan', api_key='373kEaPah9OkvR1HbBha')
 app = dash.Dash()
 
 ## set fonts
@@ -90,7 +77,8 @@ app.layout = html.Div([
                      'marginLeft': '50',
                      'marginBottom': '5',
                      'borderWidth': '1px',
-                     'textAlign': 'center'}
+                     'textAlign': 'center'
+                     }
               ),
     
     dcc.Input(id='vasprun_bands',
@@ -103,7 +91,8 @@ app.layout = html.Div([
                      'marginLeft': '50',
                      'marginBottom': '5',
                      'borderWidth': '1px',
-                     'textAlign': 'center'}
+                     'textAlign': 'center'
+                     }
               ),
     
     dcc.Input(id='kpts_bands',
@@ -115,7 +104,8 @@ app.layout = html.Div([
                      'height': '30px',
                      'marginLeft': '50',
                      'borderWidth': '1px',
-                     'textAlign': 'center'}
+                     'textAlign': 'center'\
+                     }
               ),
     
 #    html.Div('From Materials Project data:',
@@ -163,33 +153,19 @@ app.layout = html.Div([
     ## this div tells which atom was selected (temporary)
     html.Div(id='select_atom',
             style={'display': 'inline-block',
-               'float': 'left',
-               'width': '30%',
-               'marginLeft': '100'
-               }
+                   'float': 'left',
+                   'width': '30%',
+                   'marginLeft': '100'
+                   }
         ),
-#    html.Div(['Atom(s) to project onto:',
-#        dcc.Checklist(
-#                id='select_atom',
-#                options=[{'label': i, 'value': i}
-#                            for i in ['all combined', 'Si1', 'Si2']],
-#                values=['all combined'],
-#                labelStyle={'display': 'block'}
-#            )
-#        ],
-#        style={'display': 'block',
-#           'float': 'left',
-#           'width': '30%'}
-#        ),
 
     ## this div contains the checklist for selecting element projections
     html.Div(['Element(s) to project onto:',
-        dcc.Checklist(
-                id='select_elem',
-                options=[],
-                values=['all combined'],
-                labelStyle={'display': 'block'}
-            )
+        dcc.Checklist(id='select_elem',
+                      options=[],
+                      values=[],
+                      labelStyle={'display': 'block'}
+                      )
         ],
         style={'display': 'inline-block',
                'float': 'center',
@@ -199,13 +175,12 @@ app.layout = html.Div([
 
     ## this div contains the checklist for selecting orbital projections
     html.Div(['Orbitals(s) to project onto:',
-        dcc.Checklist(
-                id='select_orb',
-                options=[{'label': i, 'value': i}
-                            for i in ['total', 's', 'p', 'd']],
-                values=['total'],
-                labelStyle={'display': 'block'}
-            )
+        dcc.Checklist(id='select_orb',
+                      options=[{'label': i, 'value': i}
+                               for i in ['total', 's', 'p', 'd']],
+                      values=[],
+                      labelStyle={'display': 'block'}
+                      )
         ],
         style={'display': 'inline-block',
                'float': 'center',
@@ -241,6 +216,7 @@ def get_dos(vasprun_dos):
     dos = Vasprun(vasprun_dos).complete_dos 
     return json.dumps(dos.as_dict())
 
+
 #@app.callback(Output('dos_object', 'children'),
 #              [Input('mpid', 'value')])
 #def get_dos_mp(mpid):       
@@ -248,6 +224,7 @@ def get_dos(vasprun_dos):
 #    mpr = MPRester("tnS76clmyw18JNre")
 #    dos = mpr.get_dos_by_material_id(mpid)
 #    return json.dumps(dos.as_dict())
+
 
 @app.callback(Output('bs_object', 'children'),
               [Input('dos_object', 'children'),
@@ -260,6 +237,7 @@ def get_bs(dos, vasprun_bands, kpts_bands):
     bs = bands.get_band_structure(kpts_bands, line_mode=True, efermi=dos.efermi)     
     return json.dumps(bs.as_dict(), cls=MyEncoder)
 
+
 #@app.callback(Output('bs_object', 'children'),
 #              [Input('mpid', 'value')])
 #def get_bs_mp(mpid):      
@@ -268,20 +246,23 @@ def get_bs(dos, vasprun_bands, kpts_bands):
 #    bs = mpr.get_bandstructure_by_material_id(mpid)   
 #    return json.dumps(bs.as_dict(), cls=MyEncoder)
 
+
 @app.callback(Output('DOS_bands', 'figure'),
-              [Input('submit_button', 'n_clicks')],
-              [State('dos_object', 'children'),
-               State('bs_object', 'children'),
-               State('select_elem', 'values'),
+              [Input('submit_button', 'n_clicks'),
+               Input('dos_object', 'children'),
+               Input('bs_object', 'children')],
+              [State('select_elem', 'values'),
                State('select_orb', 'values')])
 def update_bandsfig(n_clicks, dos, bs, elems, orbs):
+    ## figure updates when the inputs change or the button is clicked
+    ## figure does NOT update when elements or orbitals are selected    
     ## de-serialize dos and bs from json format to pymatgen objects 
     dos = CompleteDos.from_dict(json.loads(dos))
-    bs = BandStructureSymmLine.from_dict(json.loads(bs))
-    if n_clicks > 0: ## only update figure on click   
-        ## update the band structure and dos figure
-        dosbandfig = BandsFig().generate_fig(dos, bs, elems, orbs)     
+    bs = BandStructureSymmLine.from_dict(json.loads(bs)) 
+    ## update the band structure and dos figure
+    dosbandfig = BandsFig().generate_fig(dos, bs, elems, orbs)
     return dosbandfig
+
 
 #@app.callback(Output('DOS_bands', 'figure'),
 #              [Input('vasprun_dos', 'value'),
@@ -299,6 +280,7 @@ def update_bandsfig(n_clicks, dos, bs, elems, orbs):
 #    dosbandfig = gen_bandsfig.generate_fig(dos, bs, orbproj)   
 #    return dosbandfig
 
+
 @app.callback(Output('unitcell', 'figure'),
               [Input('vasprun_dos', 'value')])  
 def update_structfig(vasprun_dos):
@@ -306,6 +288,7 @@ def update_structfig(vasprun_dos):
     structure = Vasprun(vasprun_dos).structures[-1]
     structfig = StructFig().generate_fig(structure)
     return structfig
+
 
 @app.callback(Output('select_elem', 'options'),
               [Input('vasprun_dos', 'value')])  
@@ -318,11 +301,6 @@ def update_elem_options(vasprun_dos):
             elems.append(str(site.specie))
     return [{'label': i, 'value': i} for i in elems]
 
-@app.callback(Output('select_elem', 'values'),
-              [Input('select_elem', 'options')])  
-def update_elem_value(elems):
-    ## set first element as default value for projection
-    return [elems[0]['value']]
 
 @app.callback(Output('select_atom', 'children'),
               [Input('unitcell', 'clickData'),

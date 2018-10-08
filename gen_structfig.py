@@ -1,11 +1,11 @@
+from mendeleev import element
+
 from pymatgen.ext.matproj import MPRester
 from pymatgen.io.vasp.outputs import Vasprun
 
 import plotly.plotly as pltly      ## plotting functions
 import plotly.tools as tls         ## plotly tools
 import plotly.graph_objs as go     ## plot and configuration tools : Scatter, Line, Layout
-
-from mendeleev import element
 
 
 class StructFig:
