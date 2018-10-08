@@ -122,10 +122,42 @@ class BandsFig:
                         
         return contrib
     
+
+    def get_dosTraces_tot(self, dos):
+        
+        ## get line plots for the total DoS 
+                
+        dosTraces = list()
+        ## plot up-spin contributions
+        dosTraces.append(self.dosTrace_tot(dos,spin='up'))
+        ## plot down-spin contributions if spin-polarized calculation
+        if len(dos.densities) == 2:
+            dosTraces.append(self.dosTrace_tot(dos,spin='down'))
+        
+        return dosTraces
+    
+    
+    def dosTrace_tot(self,dos,spin):
+        
+        ## generates, formats, and returns a line trace for the total DoS
+        
+        linestyle = dict(color="#202020")
+        if spin is 'down':
+            linestyle['dash'] = 'dot'
+        
+        return go.Scatter(x = dos.densities[self.spins[spin]],
+                          y = dos.energies - dos.efermi,
+                          mode = "lines",
+                          name = "DoS: total "+self.arrows[spin],
+                          line = linestyle
+#                          line = dict(color="#202020"),
+#                          fill = "tozeroy"
+                          )
+
     
     def get_dosTraces_el(self, dos, elems):
         
-        ## get line plots for the element and orbital projections of DOS 
+        ## get line plots for the element and orbital projections of DoS 
     
         self.get_elemcolors(elems)
         el_dos = dos.get_element_dos()
@@ -143,7 +175,7 @@ class BandsFig:
 
     def dosTrace_el(self,dos,el_dos,elem,spin):
         
-        ## generates, formats, and returns a line trace for the element projected dos
+        ## generates, formats, and returns a line trace for the element projected DoS
         
         linestyle = dict(color=element(elem).jmol_color)
         if spin is 'down':
@@ -152,29 +184,14 @@ class BandsFig:
         return go.Scatter(x = el_dos[Element(elem)].densities[self.spins[spin]],
                           y = dos.energies - dos.efermi,
                           mode = "lines",
-                          name = elem+" "+self.arrows[spin]+" DoS",
+                          name = "DoS: "+elem+" "+self.arrows[spin],
                           line = linestyle
                           )
         
-        
-    def dosTrace_tot(self,dos):
-        
-        ## generates, formats, and returns a line trace for the total dos
-        
-        print (len(dos.densities))
-        
-        return go.Scatter(x = dos.densities[Spin.up],
-                          y = dos.energies - dos.efermi,
-                          mode = "lines",
-                          name = "total DoS",
-                          line = dict(color="#202020"),
-                          fill = "tozeroy"
-                          )
-    
     
     def get_dosTraces_spd(self, dos, elem, orbs):
         
-        ## get line plots for the element and orbital projections of DOS 
+        ## get line plots for the element and orbital projections of DoS 
     
         el_spd_dos = dos.get_element_spd_dos(elem)
                 
@@ -191,7 +208,7 @@ class BandsFig:
 
     def dosTrace_spd(self,dos,el_spd_dos,elem,orb,spin):
         
-        ## generates, formats, and returns a line trace for the orbital projected dos
+        ## generates, formats, and returns a line trace for the orbital projected DoS
         
         linestyle = dict(color=self.edgecolors[orb])
         if spin is 'down':
@@ -200,12 +217,12 @@ class BandsFig:
         return go.Scatter(x = el_spd_dos[self.orbs[orb]].densities[self.spins[spin]],
                           y = dos.energies - dos.efermi,
                           mode = "lines",
-                          name = elem+" "+orb+" "+self.arrows[spin]+" DoS",
+                          name = "DoS: "+elem+" "+orb+" "+self.arrows[spin],
                           line = linestyle
                           )
         
 
-    def get_bandTraces(self, bs, elem):
+    def get_bandTraces(self, bs):
         
         ## get simple line plots for the total band structure
 
@@ -217,92 +234,142 @@ class BandsFig:
         bandTraces = list()
         ## plot up-spin contributions
         for b,band in enumerate(bandrange):
-            bandTraces.append(self.bandTrace(x,yu[b],band,elem,spin='up'))
+            bandTraces.append(self.bandTrace(x,yu[b],band,spin='up'))
         bandTraces[-1].showlegend = True  ## show only 1 legend for all traces in the group        
         ## plot down-spin contributions if spin-polarized calculation
         if bs.is_spin_polarized:
             for b,band in enumerate(bandrange):
-                bandTraces.append(self.bandTrace(x,yd[b],band,elem,spin='down'))
+                bandTraces.append(self.bandTrace(x,yd[b],band,spin='down'))
             bandTraces[-1].showlegend = True
             
         return bandTraces
     
     
-    def bandTrace(self,x,y,band,elem,spin):
+    def bandTrace(self,x,y,band,spin):
         
         ## generates, formats, and returns a simple line trace for the band structure
+        
+#        linestyle = dict(color=element(elem).jmol_color)
+        linestyle = dict(color="#202020")
+        if spin is 'down':
+            linestyle['dash'] = 'dot'
         
         return go.Scatter(x = x,
                           y = y,
                           mode = "lines",
-                          line = dict(color=element(elem).jmol_color),
-                          name = "total "+self.arrows[spin],
+                          line = linestyle,
+                          name = "BS: total "+self.arrows[spin],
                           text = "Band "+str(band),
                           showlegend = False,
                           legendgroup = "total "+spin
                           )
     
     
-    def get_colorbandTraces(self, bs, elems):
-        
-        ## get line plots for the total band structure
-        ## colored by relative contribution from each element
+#    def get_colorbandTraces(self, bs, elems):
+#        
+#        ## get line plots for the total band structure
+#        ## colored by relative contribution from each element
+#
+#        self.get_elemcolors(elems)
+#        bandrange = self.get_bandrange(bs)
+#        [x,yu,yd] = self.get_bandsxy(bs, bandrange)
+#        pbands = bs.get_projection_on_elements()
+# 
+#        ## Each segment of each band is plotted as a separate trace
+#        ## and appended to the list colorbandTraces    
+#        colorbandTraces = list()
+#        ## plot up-spin contributions
+#        for b,band in enumerate(bandrange):
+#            contrib = self.get_el_contrib(x,pbands,band,elems,spin='up')
+#            colorbandTraces.append(self.colorbandTrace(x,yu[b],contrib,band,elems,spin='up'))
+#        colorbandTraces[-1][-1].showlegend = True  ## show only 1 legend for all traces in the group        
+#        ## plot down-spin contributions if spin-polarized calculation
+#        if bs.is_spin_polarized:
+#            for b,band in enumerate(bandrange):
+#                contrib = self.get_el_contrib(x,pbands,band,elems,spin='down')
+#                colorbandTraces.append(self.colorbandTrace(x,yd[b],contrib,band,elems,spin='down'))
+#            colorbandTraces[-1][-1].showlegend = True
+#            
+#        return colorbandTraces
+#
+#
+#    def colorbandTrace(self,x,y,contrib,band,elems,spin):
+#        
+#        ## generates, formats, and returns a list of traces
+#        ## to plot a band with color gradient
+#        ## for band # "band" of the projection onto element "elem"
+#        
+#        colorBand = list()   
+#        for k in range(len(x)-1):
+#            ## determine the color of each line segment
+#            ## based on the average of the elemental contributions at the 2 endpoints
+#            contrib_ave = [(contrib[k,i] + contrib[k+1,i])/2 for i in range(len(elems))]
+#            rgb = np.dot(self.elemcolors.T,contrib_ave)
+#            linestyle = dict(color="rgb({},{},{})".format(rgb[0],rgb[1],rgb[2]))
+#            if spin is 'down':
+#                linestyle['dash'] = 'dot'
+#            colorBand.append(
+#                go.Scatter(
+#                    x = [x[k]+1E-04, x[k+1]],
+#                    y = [y[k], y[k+1]],
+#                    mode = "lines",
+#                    name = "BS: el. proj. total "+self.arrows[spin],
+#                    text = "Band "+str(band),
+#                    line = linestyle,
+#                    showlegend = False,
+#                    legendgroup = "el. proj. total "+spin
+#                )
+#            )
+#
+#        return colorBand
 
-        self.get_elemcolors(elems)
+    def get_fatbandTraces_el(self, bs, elem):
+                
+        ## get dot plots for the projected band structure
+        ## dot sizes proportionl to the relative contribution from that element
+        
         bandrange = self.get_bandrange(bs)
-        [x,yu,yd] = self.get_bandsxy(bs, bandrange)
+        [x,yu,yd] = self.get_bandsxy(bs, bandrange) 
         pbands = bs.get_projection_on_elements()
- 
-        ## Each segment of each band is plotted as a separate trace
-        ## and appended to the list colorbandTraces    
-        colorbandTraces = list()
+        
+        ## Each band is plotted as a separate scatter trace
+        ## and appended to the list fatbandTraces 
+        fatbandTraces = list()
         ## plot up-spin contributions
         for b,band in enumerate(bandrange):
-            contrib = self.get_el_contrib(x,pbands,band,elems,spin='up')
-            colorbandTraces.append(self.colorbandTrace(x,yu[b],contrib,band,elems,spin='up'))
-        colorbandTraces[-1][-1].showlegend = True  ## show only 1 legend for all traces in the group        
+            fatbandTraces.append(self.fatbandTrace_el(x,yu[b],pbands,band,elem,'up'))
+        fatbandTraces[-1].showlegend = True  ## show only 1 legend for all traces in the group
         ## plot down-spin contributions if spin-polarized calculation
         if bs.is_spin_polarized:
             for b,band in enumerate(bandrange):
-                contrib = self.get_el_contrib(x,pbands,band,elems,spin='down')
-                colorbandTraces.append(self.colorbandTrace(x,yd[b],contrib,band,elems,spin='down'))
-            colorbandTraces[-1][-1].showlegend = True
-            
-        return colorbandTraces
-
-
-    def colorbandTrace(self,x,y,contrib,band,elems,spin):
+                fatbandTraces.append(self.fatbandTrace_el(x,yd[b],pbands,band,elem,'down'))
+            fatbandTraces[-1].showlegend = True
         
-        ## generates, formats, and returns a list of traces
-        ## to plot a band with color gradient
+        return fatbandTraces
+
+
+    def fatbandTrace_el(self,x,y,pbands,band,elem,spin):
+        
+        ## generates, formats, and returns a fatband trace
         ## for band # "band" of the projection onto element "elem"
         
-        colorBand = list()   
-        for k in range(len(x)-1):
-            ## determine the color of each line segment
-            ## based on the average of the elemental contributions at the 2 endpoints
-            contrib_ave = [(contrib[k,i] + contrib[k+1,i])/2 for i in range(len(elems))]
-            rgb = np.dot(self.elemcolors.T,contrib_ave)
-            linestyle = dict(color="rgb({},{},{})".format(rgb[0],rgb[1],rgb[2]))
-            if spin is 'down':
-                linestyle['dash'] = 'dot'
-            colorBand.append(
-                go.Scatter(
-                    x = [x[k]+1E-04, x[k+1]],
-                    y = [y[k], y[k+1]],
-                    mode = "lines",
-                    name = "el. proj. total "+self.arrows[spin],
-                    text = "Band "+str(band),
-                    line = linestyle,
-                    showlegend = False,
-                    legendgroup = "el. proj. total "+spin
-                )
-            )
-
-        return colorBand
+        markersize = [15*pbands[self.spins[spin]][band][k][elem] for k in range(len(x))]
+        
+        return go.Scatter(x = x,
+                          y = y,
+                          mode = "markers",
+                          marker = dict(size=markersize,
+                                        color=element(elem).jmol_color,
+                                        opacity=1,
+                                        line=dict(color=element(elem).jmol_color,width=1)),
+                          name = "BS: "+str(elem)+" "+self.arrows[spin],
+                          text = "Band "+str(band),
+                          showlegend = False,
+                          legendgroup = str(elem)+spin
+                          )
 
     
-    def get_fatbandTraces(self, bs, elem, orbs):
+    def get_fatbandTraces_spd(self, bs, elem, orbs):
                 
         ## get dot plots for the projected band structure
         ## dot sizes proportionl to the relative contribution from that orbital
@@ -317,18 +384,18 @@ class BandsFig:
         for orb in orbs: 
             ## plot up-spin contributions
             for b,band in enumerate(bandrange):
-                fatbandTraces.append(self.fatbandTrace(x,yu[b],pbands,band,elem,orb,'up'))
+                fatbandTraces.append(self.fatbandTrace_spd(x,yu[b],pbands,band,elem,orb,'up'))
             fatbandTraces[-1].showlegend = True  ## show only 1 legend for all traces in the group
             ## plot down-spin contributions if spin-polarized calculation
             if bs.is_spin_polarized:
                 for b,band in enumerate(bandrange):
-                    fatbandTraces.append(self.fatbandTrace(x,yd[b],pbands,band,elem,orb,'down'))
+                    fatbandTraces.append(self.fatbandTrace_spd(x,yd[b],pbands,band,elem,orb,'down'))
                 fatbandTraces[-1].showlegend = True
         
         return fatbandTraces
 
 
-    def fatbandTrace(self,x,y,pbands,band,elem,orb,spin):
+    def fatbandTrace_spd(self,x,y,pbands,band,elem,orb,spin):
         
         ## generates, formats, and returns a fatband trace
         ## for band # "band" of the projection onto element "elem", orbital "orb"
@@ -342,7 +409,7 @@ class BandsFig:
                                         color=self.fillcolors[orb][spin],
                                         opacity=1,
                                         line=dict(color=self.edgecolors[orb],width=1)),
-                          name = str(elem)+" "+orb+" "+self.arrows[spin],
+                          name = "BS: "+str(elem)+" "+orb+" "+self.arrows[spin],
                           text = "Band "+str(band),
                           showlegend = False,
                           legendgroup = str(elem)+orb+spin
@@ -433,39 +500,47 @@ class BandsFig:
         
         dosbandfig = tls.make_subplots(rows=1, cols=2, shared_yaxes=True)
         
-        if 'total' in orbs:
-            
+        ## add total band structure
+        bandTraces = self.get_bandTraces(bs)
+        ## add the total band structure to subplot (1,1)
+        for btrace in bandTraces:
+            dosbandfig.append_trace(btrace, 1, 1)                
+        ## add total density of states
+        dosTraces = self.get_dosTraces_tot(dos)
+        ## add the densities to subplot (1,2)
+        for dosTrace in dosTraces:
+            dosbandfig.append_trace(dosTrace, 1, 2)
+        
+        if 'total' in orbs:            
             ## add band structure
-            if len(elems) == 1:
-                bandTraces = self.get_bandTraces(bs,elems[0])
-                ## add the total band structure to subplot (1,1)
-                for btrace in bandTraces:
-                    dosbandfig.append_trace(btrace, 1, 1)
-            else: ## if more than 1 element
-                colorbandTraces = self.get_colorbandTraces(bs, elems)
-                ## add the colored band structure to subplot (1,1)
-                for cbtrace in colorbandTraces:
-                    for cbt in cbtrace:
-                        dosbandfig.append_trace(cbt, 1, 1) 
-                        
-            ## add density of states
-            dosTraces = self.get_dosTraces_el(dos, elems)
+            for elem in elems:                
+                ## add the fat bands
+                fatbandTraces = self.get_fatbandTraces_el(bs, elem)
+                ## add the fat bands to subplot (1,1)
+                for fbtrace in fatbandTraces:
+                    dosbandfig.append_trace(fbtrace, 1, 1)
+            ## add colored band structure
+#            if len(elems) > 1: ## if more than 1 element
+#                colorbandTraces = self.get_colorbandTraces(bs, elems)
+#                ## add the colored band structure to subplot (1,1)
+#                for cbtrace in colorbandTraces:
+#                    for cbt in cbtrace:
+#                        dosbandfig.append_trace(cbt, 1, 1)                         
+            ## add element projected density of states
+            eldosTraces = self.get_dosTraces_el(dos, elems)
             ## add the densities to subplot (1,2)
-            for dosTrace in dosTraces:
-                dosbandfig.append_trace(dosTrace, 1, 2)
-            dosbandfig.append_trace(self.dosTrace_tot(dos), 1, 2)
+            for dosTrace in eldosTraces:
+                dosbandfig.append_trace(dosTrace, 1, 2)                
                 
         ## if any orbital projections are selected
         orbs1 = [b for b in orbs if b != "total"] 
         if len(orbs1) > 0:
-            for elem in elems:
-                
+            for elem in elems:                
                 ## add the fat bands
-                fatbandTraces = self.get_fatbandTraces(bs, elem, orbs1)
+                fatbandTraces = self.get_fatbandTraces_spd(bs, elem, orbs1)
                 ## add the fat bands to subplot (1,1)
                 for fbtrace in fatbandTraces:
-                    dosbandfig.append_trace(fbtrace, 1, 1)
-                    
+                    dosbandfig.append_trace(fbtrace, 1, 1)                    
                 ## add projected density of states
                 dosTraces = self.get_dosTraces_spd(dos, elem, orbs1)
                 ## add the densities to subplot (1,2)

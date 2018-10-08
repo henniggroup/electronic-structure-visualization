@@ -118,23 +118,23 @@ app.layout = html.Div([
                      'textAlign': 'center'}
               ),
     
-    html.Div('From Materials Project data:',
-             style={'marginLeft': '50'
-                   }
-            ),
-    
-    dcc.Input(id='mpid',
-              type='text',
-              value='',
-              placeholder='input Materials Project id: mp-###',
-              style={'display': 'block',
-                     'width': '30%',
-                     'height': '30px',
-                     'marginLeft': '50',
-                     'marginBottom': '5',
-                     'borderWidth': '1px',
-                     'textAlign': 'center'}
-              ),
+#    html.Div('From Materials Project data:',
+#             style={'marginLeft': '50'
+#                   }
+#            ),
+#    
+#    dcc.Input(id='mpid',
+#              type='text',
+#              value='',
+#              placeholder='input Materials Project id: mp-###',
+#              style={'display': 'block',
+#                     'width': '30%',
+#                     'height': '30px',
+#                     'marginLeft': '50',
+#                     'marginBottom': '5',
+#                     'borderWidth': '1px',
+#                     'textAlign': 'center'}
+#              ),
     
     ## hidden divs used to store dos and bs objects
     html.Div(id='dos_object', 
