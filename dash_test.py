@@ -36,7 +36,7 @@ app = dash.Dash()
 ## set fonts
 app.css.append_css({"external_url": "https://codepen.io/chriddyp/pen/bWLwgP.css"})
 mathjax = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML'
-app.scripts.append_script({ 'external_url' : mathjax })
+app.scripts.append_script({'external_url': mathjax})
 
 ## set colors
 colors = {'background': '#FFFFFF',
@@ -47,14 +47,12 @@ colors = {'background': '#FFFFFF',
 
 app.layout = html.Div([
     
-    ## set header
     html.H3('This is a test page',
             style={'textAlign': 'center',
                    'color': colors['text1']
                    }
             ), 
 
-    ## we'll define this line of text as its own section (division)
     html.Div('currently a work in progress by Anne Marie Tan :)',
              style={'textAlign': 'center',
                     'color': colors['text2'],
@@ -62,6 +60,7 @@ app.layout = html.Div([
                    }
             ),
 
+    ## boxes to input path to local data
     html.Div('From local data:',
              style={'marginLeft': '50'
                    }
@@ -141,7 +140,7 @@ app.layout = html.Div([
                      }
               ),
 
-    ## our interactive graph!
+    ## our interactive bands+dos figure!
     dcc.Graph(id='DOS_bands',
               figure={'data': []},
               style={'display': 'inline-block',
@@ -151,13 +150,13 @@ app.layout = html.Div([
               ),
 
     ## this div tells which atom was selected (temporary)
-    html.Div(id='select_atom',
-            style={'display': 'inline-block',
-                   'float': 'left',
-                   'width': '30%',
-                   'marginLeft': '100'
-                   }
-        ),
+#    html.Div(id='select_atom',
+#            style={'display': 'inline-block',
+#                   'float': 'left',
+#                   'width': '30%',
+#                   'marginLeft': '100'
+#                   }
+#        ),
 
     ## this div contains the checklist for selecting element projections
     html.Div(['Element(s) to project onto:',
@@ -167,8 +166,8 @@ app.layout = html.Div([
                       labelStyle={'display': 'block'}
                       )
         ],
-        style={'display': 'inline-block',
-               'float': 'center',
+        style={'position': 'absolute',
+               'left': '30%',
                'width': '20%'
                }
         ),
@@ -182,12 +181,13 @@ app.layout = html.Div([
                       labelStyle={'display': 'block'}
                       )
         ],
-        style={'display': 'inline-block',
-               'float': 'center',
+        style={'position': 'absolute',
+               'left': '50%',
                'width': '20%'
                }
         ),
-        
+    
+    ## button to click to generate bands+dos figure
     html.Button(id='submit_button',
                 n_clicks=0,
                 children='Generate plot',
@@ -232,9 +232,12 @@ def get_dos(vasprun_dos):
                Input('kpts_bands', 'value')])
 def get_bs(dos, vasprun_bands, kpts_bands):      
     ## get BandStructureSymmLine object and "save" in hidden div in json format
-    dos = CompleteDos.from_dict(json.loads(dos))
     bands = Vasprun(vasprun_bands, parse_projected_eigen = True)
-    bs = bands.get_band_structure(kpts_bands, line_mode=True, efermi=dos.efermi)     
+    if dos:
+        dos = CompleteDos.from_dict(json.loads(dos))
+        bs = bands.get_band_structure(kpts_bands, line_mode=True, efermi=dos.efermi)  
+    else:
+        bs = bands.get_band_structure(kpts_bands, line_mode=True) 
     return json.dumps(bs.as_dict(), cls=MyEncoder)
 
 
@@ -256,9 +259,11 @@ def get_bs(dos, vasprun_bands, kpts_bands):
 def update_bandsfig(n_clicks, dos, bs, elems, orbs):
     ## figure updates when the inputs change or the button is clicked
     ## figure does NOT update when elements or orbitals are selected    
-    ## de-serialize dos and bs from json format to pymatgen objects 
-    dos = CompleteDos.from_dict(json.loads(dos))
-    bs = BandStructureSymmLine.from_dict(json.loads(bs)) 
+    ## de-serialize dos and bs from json format to pymatgen objects
+    if dos:
+        dos = CompleteDos.from_dict(json.loads(dos))
+    if bs:
+        bs = BandStructureSymmLine.from_dict(json.loads(bs))
     ## update the band structure and dos figure
     dosbandfig = BandsFig().generate_fig(dos, bs, elems, orbs)
     return dosbandfig
@@ -282,19 +287,25 @@ def update_bandsfig(n_clicks, dos, bs, elems, orbs):
 
 
 @app.callback(Output('unitcell', 'figure'),
-              [Input('vasprun_dos', 'value')])  
-def update_structfig(vasprun_dos):
+              [Input('vasprun_dos', 'value'),
+               Input('vasprun_bands', 'value')])  
+def update_structfig(vasprun_dos, vasprun_bands):
     ## Generate our simple structure figure
-    structure = Vasprun(vasprun_dos).structures[-1]
+    if vasprun_dos: vasprun = vasprun_dos
+    elif vasprun_bands: vasprun = vasprun_bands
+    structure = Vasprun(vasprun).structures[-1]
     structfig = StructFig().generate_fig(structure)
     return structfig
 
 
 @app.callback(Output('select_elem', 'options'),
-              [Input('vasprun_dos', 'value')])  
-def update_elem_options(vasprun_dos):
+              [Input('vasprun_dos', 'value'),
+               Input('vasprun_bands', 'value')])  
+def update_elem_options(vasprun_dos, vasprun_bands):
     ## get list of elements in the system to display as options
-    structure = Vasprun(vasprun_dos).structures[-1]  
+    if vasprun_dos: vasprun = vasprun_dos
+    elif vasprun_bands: vasprun = vasprun_bands
+    structure = Vasprun(vasprun).structures[-1]  
     elems = []          
     for site in structure.sites:
         if site.specie not in elems:
@@ -302,17 +313,17 @@ def update_elem_options(vasprun_dos):
     return [{'label': i, 'value': i} for i in elems]
 
 
-@app.callback(Output('select_atom', 'children'),
-              [Input('unitcell', 'clickData'),
-               Input('vasprun_dos', 'value')])
-def update_select_atom(clickData,vasprun_dos):
-    structure = Vasprun(vasprun_dos).structures[-1]
-    if clickData == None:
-        return 'You haven\'t selected an atom yet!'
-    elif clickData['points'][0]['curveNumber'] < structure.num_sites:
-        return 'You\'ve selected atom {}.'.format(clickData['points'][0]['curveNumber'])
-    else:
-        return 'You\'ve selected something that\'s not an atom!'
+#@app.callback(Output('select_atom', 'children'),
+#              [Input('unitcell', 'clickData'),
+#               Input('vasprun_dos', 'value')])
+#def update_select_atom(clickData,vasprun_dos):
+#    structure = Vasprun(vasprun_dos).structures[-1]
+#    if clickData == None:
+#        return 'You haven\'t selected an atom yet!'
+#    elif clickData['points'][0]['curveNumber'] < structure.num_sites:
+#        return 'You\'ve selected atom {}.'.format(clickData['points'][0]['curveNumber'])
+#    else:
+#        return 'You\'ve selected something that\'s not an atom!'
 
 
 if __name__ == '__main__':

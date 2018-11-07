@@ -432,19 +432,20 @@ class BandsFig:
         )
         
         dosyaxis = go.layout.YAxis(
-            title = "$E - E_f \quad / \quad \\text{eV}$",
+#            title = "$E - E_f \quad / \quad \\text{eV}$",
+            title = "E - Ef / eV",
             showgrid = True,
             showline = True,
             mirror = "ticks",
             ticks = "inside",
-            linewidth = 2,
+            linewidth = 1,
             tickwidth = 2,
     #        zeroline = False,
-            zerolinewidth = 0.5
+            zerolinecolor = '#ababab',
+            zerolinewidth = 2
         )
         
         doslayout = go.Layout(
-            title = "Density of states of Silicon",
             xaxis = dosxaxis,
             yaxis = dosyaxis
         )
@@ -487,85 +488,106 @@ class BandsFig:
         )
                    
         bandlayout = go.Layout(
-            title="Band structure of Silicon",
             xaxis=bandxaxis,
             yaxis=bandyaxis
         )
         
         return bandlayout
     
-    
+
     def generate_fig(self, dos, bs, elems, orbs):
-        
+                
         dosbandfig = tls.make_subplots(rows=1, cols=2, shared_yaxes=True)
         
-        ## add total band structure
-        bandTraces = self.get_bandTraces(bs)
-        ## add the total band structure to subplot (1,1)
-        for btrace in bandTraces:
-            dosbandfig.append_trace(btrace, 1, 1)                
-        ## add total density of states
-        dosTraces = self.get_dosTraces_tot(dos)
-        ## add the densities to subplot (1,2)
-        for dosTrace in dosTraces:
-            dosbandfig.append_trace(dosTrace, 1, 2)
-        
-        if 'total' in orbs:            
-            ## add band structure
-            for elem in elems:                
-                ## add the fat bands
-                fatbandTraces = self.get_fatbandTraces_el(bs, elem)
-                ## add the fat bands to subplot (1,1)
-                for fbtrace in fatbandTraces:
-                    dosbandfig.append_trace(fbtrace, 1, 1)
-            ## add colored band structure
-#            if len(elems) > 1: ## if more than 1 element
-#                colorbandTraces = self.get_colorbandTraces(bs, elems)
-#                ## add the colored band structure to subplot (1,1)
-#                for cbtrace in colorbandTraces:
-#                    for cbt in cbtrace:
-#                        dosbandfig.append_trace(cbt, 1, 1)                         
-            ## add element projected density of states
-            eldosTraces = self.get_dosTraces_el(dos, elems)
-            ## add the densities to subplot (1,2)
-            for dosTrace in eldosTraces:
-                dosbandfig.append_trace(dosTrace, 1, 2)                
-                
-        ## if any orbital projections are selected
-        orbs1 = [b for b in orbs if b != "total"] 
-        if len(orbs1) > 0:
-            for elem in elems:                
-                ## add the fat bands
-                fatbandTraces = self.get_fatbandTraces_spd(bs, elem, orbs1)
-                ## add the fat bands to subplot (1,1)
-                for fbtrace in fatbandTraces:
-                    dosbandfig.append_trace(fbtrace, 1, 1)                    
-                ## add projected density of states
-                dosTraces = self.get_dosTraces_spd(dos, elem, orbs1)
-                ## add the densities to subplot (1,2)
-                for dosTrace in dosTraces:
-                    dosbandfig.append_trace(dosTrace, 1, 2)
-            
-        ## get axes ranges, labels         
-        erange = self.get_erange(bs)
-        labels_uniq, labelspos_uniq = self.get_kpt_labels(bs)
-        bandLayout = self.layout_bands(erange, labels_uniq, labelspos_uniq) 
-        dosLayout = self.layout_dos(dos)
-            
-        ## Customize axes and other aspects of the plot
-        ## using previously defined axis and layout options
-        dosbandfig["layout"].update(
-            go.Layout(
-                title="Band structure and density of states",
-                xaxis1=bandLayout["xaxis"],
-                yaxis1=bandLayout["yaxis"],
-                xaxis2=dosLayout["xaxis"]
+        if bs:
+            ## add total band structure
+            bandTraces = self.get_bandTraces(bs)
+            ## add the total band structure to subplot (1,1)
+            for btrace in bandTraces:
+                dosbandfig.append_trace(btrace, 1, 1)        
+            if 'total' in orbs:
+#                ## add colored band structure
+#                if len(elems) > 1: ## if more than 1 element
+#                    colorbandTraces = self.get_colorbandTraces(bs, elems)
+#                    ## add the colored band structure to subplot (1,1)
+#                    for cbtrace in colorbandTraces:
+#                        for cbt in cbtrace:
+#                            dosbandfig.append_trace(cbt, 1, 1) 
+                ## add fat band structure
+                for elem in elems:                
+                    ## add the fat bands
+                    fatbandTraces = self.get_fatbandTraces_el(bs, elem)
+                    ## add the fat bands to subplot (1,1)
+                    for fbtrace in fatbandTraces:
+                        dosbandfig.append_trace(fbtrace, 1, 1)                                              
+            ## if any orbital projections are selected
+            orbs1 = [b for b in orbs if b != "total"] 
+            if len(orbs1) > 0:
+                for elem in elems:
+                    ## add the fat bands
+                    fatbandTraces = self.get_fatbandTraces_spd(bs, elem, orbs1)
+                    ## add the fat bands to subplot (1,1)
+                    for fbtrace in fatbandTraces:
+                        dosbandfig.append_trace(fbtrace, 1, 1)                    
+
+            ## format axes        
+            erange = self.get_erange(bs)
+            labels_uniq, labelspos_uniq = self.get_kpt_labels(bs)
+            bandLayout = self.layout_bands(erange, labels_uniq, labelspos_uniq)            
+            dosbandfig["layout"].update(
+                go.Layout(
+                    title="Band structure",
+                    xaxis1=bandLayout["xaxis"],
+                    yaxis1=bandLayout["yaxis"]
+                )
             )
-        )
+                        
+        if dos:
+            ## add total density of states
+            dosTraces = self.get_dosTraces_tot(dos)
+            ## add the densities to subplot (1,2)
+            for dosTrace in dosTraces:
+                dosbandfig.append_trace(dosTrace, 1, 2)
+            if 'total' in orbs:                     
+                ## add element projected density of states
+                eldosTraces = self.get_dosTraces_el(dos, elems)
+                ## add the densities to subplot (1,2)
+                for dosTrace in eldosTraces:
+                    dosbandfig.append_trace(dosTrace, 1, 2)   
+            ## if any orbital projections are selected
+            orbs1 = [b for b in orbs if b != "total"] 
+            if len(orbs1) > 0:
+                for elem in elems:                  
+                    ## add projected density of states
+                    dosTraces = self.get_dosTraces_spd(dos, elem, orbs1)
+                    ## add the densities to subplot (1,2)
+                    for dosTrace in dosTraces:
+                        dosbandfig.append_trace(dosTrace, 1, 2)
+            
+            ## format axes
+            dosLayout = self.layout_dos(dos)            
+            dosbandfig["layout"].update(
+                go.Layout(
+                    title="Band structure and density of states",
+                    xaxis2=dosLayout["xaxis"]
+                )
+            )            
+            if not bs:
+                dosbandfig["layout"].update(
+                    go.Layout(
+                        title="Density of states",
+                        yaxis1=dosLayout["yaxis"]
+                    )
+                )
     
         ## adjust size of subplots
-        dosbandfig["layout"]["xaxis1"]["domain"] = [0., 0.7]
-        dosbandfig["layout"]["xaxis2"]["domain"] = [0.702, 1.]   
+        if bs and dos:
+            dosbandfig["layout"]["xaxis1"]["domain"] = [0., 0.7]
+            dosbandfig["layout"]["xaxis2"]["domain"] = [0.702, 1.]
+        elif bs and not dos:
+            dosbandfig["layout"]["xaxis1"]["domain"] = [0.2, 0.9]
+        elif dos and not bs:
+            dosbandfig["layout"]["xaxis2"]["domain"] = [0.4, 0.7]
         
         return dosbandfig   
 
@@ -582,13 +604,14 @@ if __name__ == '__main__':
 #    bs = mpr.get_bandstructure_by_material_id("mp-2815") ## MoS2 
     
     ## use local test dataset
-    folder = "testdata/MoS2/"
-    dos = Vasprun(folder+"vasprun.xml").complete_dos
+    folder = "testdata/Si/"
+    dos = Vasprun(folder+"vasprun_dos.xml").complete_dos
     bands = Vasprun(folder+"vasprun.xml", parse_projected_eigen = True)
+    print (dos.efermi,bands.efermi)
     bs = bands.get_band_structure(folder+"KPOINTS", line_mode=True, efermi=dos.efermi)
 
-    dosbandfig = BandsFig().generate_fig(dos, bs, ["Mo","S"], ["total"])
+    dosbandfig = BandsFig().generate_fig(dos, bs, ["Si"], ["total"])
     
-    offline.plot(dosbandfig, filename="DOS_bands_MoS2_color.html", auto_open=False)
+    offline.plot(dosbandfig, filename="DOS_bands_Si.html", auto_open=False)
  
     
