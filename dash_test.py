@@ -136,7 +136,8 @@ app.layout = html.Div([
     dcc.Graph(id='unitcell',
               figure={'data': []},
               style={'display': 'inline-block',
-                     'width': '30%'
+                     'width': '30%',
+                     'height': '600'
                      }
               ),
 

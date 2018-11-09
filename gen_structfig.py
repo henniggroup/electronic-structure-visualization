@@ -1,3 +1,4 @@
+import numpy as np
 from mendeleev import element
 
 from pymatgen.ext.matproj import MPRester
@@ -45,12 +46,21 @@ class StructFig:
         return edgeTrace
     
     
-    def layout(self):
+    def layout(self,structure):
+        
+        mat = structure.lattice.matrix
+        ## trying to hack the aspect ratio...
+        yscale = np.amax(mat,0)[1]/np.amax(mat,0)[0]
+        zscale = np.amax(mat,0)[2]/np.amax(mat,0)[0]
       
         layout = go.Layout(
         scene=dict(
+            camera=dict(eye=dict(x=1.5*zscale, y=1.5*zscale, z=0.0)),
+            aspectratio=dict(x=1,
+                             y=0.8*yscale,
+                             z=0.8*zscale),
             xaxis=dict(
-                autorange=True,
+#                autorange=False,
                 showspikes=False,
 #                showgrid=False,
                 zeroline=False,
@@ -60,7 +70,7 @@ class StructFig:
                 showticklabels=False
                 ),
             yaxis=dict(
-                autorange=True,
+#                autorange=False,
                 showspikes=False,
 #                showgrid=False,
                 zeroline=False,
@@ -70,7 +80,7 @@ class StructFig:
                 showticklabels=False
                 ),
             zaxis=dict(
-                autorange=True,
+#                autorange=False,
                 showspikes=False,
 #                showgrid=False,
                 zeroline=False,
@@ -102,7 +112,7 @@ class StructFig:
         for edge in edges:
             data.append(self.get_edgeTrace(edge))
         
-        structfig = go.Figure(data=data, layout=self.layout())
+        structfig = go.Figure(data=data, layout=self.layout(structure))
         
         return structfig
 
