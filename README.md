@@ -1,6 +1,6 @@
 # Full electronic structure visualization tool
 
-This is an ongoing effort to develop an interactive tool for visualizing full electronic structures of materials.
+This is an ongoing effort to develop an interactive tool for visualizing full electronic structures of materials. It is in its very early stages so there will probably be bugs, so please be patient! Please send any questions or feedback to Anne Marie at annemarietan@ufl.edu :smiley:.
 
 
 ## Installation:
