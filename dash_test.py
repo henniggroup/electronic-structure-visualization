@@ -163,7 +163,7 @@ app.layout = html.Div([
     html.Div(['Element(s) to project onto:',
         dcc.Checklist(id='select_elem',
                       options=[],
-                      values=[],
+                      value=[],
                       labelStyle={'display': 'block'}
                       )
         ],
@@ -178,7 +178,7 @@ app.layout = html.Div([
         dcc.Checklist(id='select_orb',
                       options=[{'label': i, 'value': i}
                                for i in ['total', 's', 'p', 'd']],
-                      values=[],
+                      value=[],
                       labelStyle={'display': 'block'}
                       )
         ],
@@ -255,8 +255,8 @@ def get_bs(dos, vasprun_bands, kpts_bands):
               [Input('submit_button', 'n_clicks'),
                Input('dos_object', 'children'),
                Input('bs_object', 'children')],
-              [State('select_elem', 'values'),
-               State('select_orb', 'values')])
+              [State('select_elem', 'value'),
+               State('select_orb', 'value')])
 def update_bandsfig(n_clicks, dos, bs, elems, orbs):
     ## figure updates when the inputs change or the button is clicked
     ## figure does NOT update when elements or orbitals are selected    
@@ -274,8 +274,8 @@ def update_bandsfig(n_clicks, dos, bs, elems, orbs):
 #              [Input('vasprun_dos', 'value'),
 #               Input('vasprun_bands', 'value'),
 #               Input('kpts_bands', 'value'),
-#               Input('select_elem', 'values'),
-#               Input('select_orb', 'values')])
+#               Input('select_elem', 'value'),
+#               Input('select_orb', 'value')])
 #def update_bandsfig(vasprun_dos,vasprun_bands,kpts_bands,elemproj,orbproj):
 #    ## This version calls pymatgen every time...will it be slower?
 #    ## get dos and bs objects
@@ -307,10 +307,9 @@ def update_elem_options(vasprun_dos, vasprun_bands):
     if vasprun_dos: vasprun = vasprun_dos
     elif vasprun_bands: vasprun = vasprun_bands
     structure = Vasprun(vasprun).structures[-1]  
-    elems = []          
-    for site in structure.sites:
-        if site.specie not in elems:
-            elems.append(str(site.specie))
+    elems = [str(site.specie) for site in structure.sites]   
+    ## remove duplicate entries      
+    elems = list(dict.fromkeys(elems))
     return [{'label': i, 'value': i} for i in elems]
 
 
@@ -329,6 +328,6 @@ def update_elem_options(vasprun_dos, vasprun_bands):
 
 if __name__ == '__main__':
     
-    app.run_server(debug=True)
+    app.run_server(debug=False)
     
     

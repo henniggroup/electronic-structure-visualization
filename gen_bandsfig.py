@@ -11,6 +11,7 @@ import plotly.plotly as pltly      ## plotting functions
 import plotly.tools as tls         ## plotly tools
 import plotly.graph_objs as go     ## plot and configuration tools : Scatter, Line, Layout
 from plotly import offline
+import plotly.io as pio
 
 
 class BandsFig:
@@ -141,7 +142,7 @@ class BandsFig:
         ## generates, formats, and returns a line trace for the total DoS
         
         linestyle = dict(color="#202020")
-        if spin is 'down':
+        if spin == 'down':
             linestyle['dash'] = 'dot'
         
         return go.Scatter(x = dos.densities[self.spins[spin]],
@@ -177,7 +178,7 @@ class BandsFig:
         ## generates, formats, and returns a line trace for the element projected DoS
         
         linestyle = dict(color=element(elem).jmol_color)
-        if spin is 'down':
+        if spin == 'down':
             linestyle['dash'] = 'dot'
         
         return go.Scatter(x = el_dos[Element(elem)].densities[self.spins[spin]],
@@ -210,7 +211,7 @@ class BandsFig:
         ## generates, formats, and returns a line trace for the orbital projected DoS
         
         linestyle = dict(color=self.edgecolors[orb])
-        if spin is 'down':
+        if spin == 'down':
             linestyle['dash'] = 'dot'
         
         return go.Scatter(x = el_spd_dos[self.orbs[orb]].densities[self.spins[spin]],
@@ -250,7 +251,7 @@ class BandsFig:
         
 #        linestyle = dict(color=element(elem).jmol_color)
         linestyle = dict(color="#202020")
-        if spin is 'down':
+        if spin == 'down':
             linestyle['dash'] = 'dot'
         
         return go.Scatter(x = x,
@@ -604,14 +605,18 @@ if __name__ == '__main__':
 #    bs = mpr.get_bandstructure_by_material_id("mp-2815") ## MoS2 
     
     ## use local test dataset
-    folder = "testdata/Si/"
-    dos = Vasprun(folder+"vasprun_dos.xml").complete_dos
-    bands = Vasprun(folder+"vasprun.xml", parse_projected_eigen = True)
-    print (dos.efermi,bands.efermi)
-    bs = bands.get_band_structure(folder+"KPOINTS", line_mode=True, efermi=dos.efermi)
+    folder = "testdata/MoS2_SCAN/"
+#    dos = Vasprun(folder+"vasprun_dos.xml").complete_dos
+    dos = None
+    bands = Vasprun(folder+"vasprun_bands.xml", parse_projected_eigen = True)
+#    print (dos.efermi,bands.efermi)
+#    bs = bands.get_band_structure(folder+"KPOINTS", line_mode=True, efermi=dos.efermi)
+    bs = bands.get_band_structure(folder+"KPOINTS", line_mode=True, efermi=bands.efermi)
 
-    dosbandfig = BandsFig().generate_fig(dos, bs, ["Si"], ["total"])
+    dosbandfig = BandsFig().generate_fig(dos, bs, ["Mo"], ["d"])
     
-    offline.plot(dosbandfig, filename="DOS_bands_Si.html", auto_open=False)
+#    offline.plot(dosbandfig, filename="MoS2_SCAN_bs", image_width=1200, image_height=900, image='png', auto_open=False)
+    
+    pio.write_image(dosbandfig, 'MoS2_SCAN_bs.pdf',width=1200, height=600)
  
     
