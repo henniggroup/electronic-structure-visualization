@@ -5,6 +5,7 @@ from pymatgen.ext.matproj import MPRester
 from pymatgen.io.vasp.outputs import Vasprun
 from pymatgen.electronic_structure.dos import CompleteDos
 from pymatgen.electronic_structure.bandstructure import BandStructureSymmLine
+from pymatgen.core.periodic_table import Element
 
 import plotly.tools as tls
 
@@ -47,7 +48,7 @@ colors = {'background': '#FFFFFF',
 
 app.layout = html.Div([
     
-    html.H3('This is a test page',
+    html.H3('Interactive Electronic Structure Visualization Tool',
             style={'textAlign': 'center',
                    'color': colors['text1']
                    }
@@ -159,44 +160,102 @@ app.layout = html.Div([
 #                   }
 #        ),
 
-    ## this div contains the checklist for selecting element projections
-    html.Div(['Element(s) to project onto:',
-        dcc.Checklist(id='select_elem',
-                      options=[],
-                      value=[],
-                      labelStyle={'display': 'block'}
-                      )
-        ],
-        style={'position': 'absolute',
-               'left': '30%',
-               'width': '20%'
-               }
+    html.Div('Select projections:',
+             style={'margin': 'auto',
+                    'width': '30%'
+                    }
+            ),
+    
+    ## hidden divs used to store the full dict of options
+    html.Div(id='options', 
+             style={'display': 'none'}),
+        
+    html.Div(
+        dcc.Dropdown(
+            id='species-dropdown',
+            placeholder='select species',
+            multi=True
+            ),
+            style={'margin': 'auto',
+                   'width': '30%',
+                   'height': '30px',
+                   'marginBottom': '10px',
+                   'borderWidth': '1px'
+                    }
         ),
 
-    ## this div contains the checklist for selecting orbital projections
-    html.Div(['Orbitals(s) to project onto:',
-        dcc.Checklist(id='select_orb',
-                      options=[{'label': i, 'value': i}
-                               for i in ['total', 's', 'p', 'd']],
-                      value=[],
-                      labelStyle={'display': 'block'}
-                      )
-        ],
-        style={'position': 'absolute',
-               'left': '50%',
-               'width': '20%'
-               }
+    html.Div(
+        dcc.Dropdown(
+            id='orb-dropdown',
+            placeholder='select orbital',
+            multi=True
+            ),
+            style={'margin': 'auto',
+                   'width': '30%',
+                   'height': '30px',
+                   'marginBottom': '10px',
+                   'borderWidth': '1px'
+                    }
         ),
+        
+    html.Div(
+        dcc.Dropdown(
+            id='suborb-dropdown',
+            placeholder='select sub-orbital',
+            multi=True
+            ),
+            style={'margin': 'auto',
+                   'width': '30%',
+                   'height': '30px',
+                   'marginBottom': '10px',
+                   'borderWidth': '1px'
+                    }
+        ),
+
+    html.Div(id='display-selected-values',
+             style={'margin': 'auto',
+                    'width': '30%'
+                    }
+            ),
+
+#    ## this div contains the checklist for selecting element projections
+#    html.Div(['Element(s) to project onto:',
+#        dcc.Checklist(id='select_elem',
+#                      options=[],
+#                      value=[],
+#                      labelStyle={'display': 'block'}
+#                      )
+#        ],
+#        style={'position': 'absolute',
+#               'left': '30%',
+#               'width': '20%'
+#               }
+#        ),
+#
+#    ## this div contains the checklist for selecting orbital projections
+#    html.Div(['Orbitals(s) to project onto:',
+#        dcc.Checklist(id='select_orb',
+#                      options=[{'label': i, 'value': i}
+#                               for i in ['total', 's', 'p', 'd']],
+#                      value=[],
+#                      labelStyle={'display': 'block'}
+#                      )
+#        ],
+#        style={'position': 'absolute',
+#               'left': '50%',
+#               'width': '20%'
+#               }
+#        ),
     
     ## button to click to generate bands+dos figure
     html.Button(id='submit_button',
                 n_clicks=0,
                 children='Generate plot',
-                style={'display': 'inline-block',
-                       'float': 'right',
+                style={'position': 'fixed',
+                       'left': '40%',
                        'width': '20%'
                        }
-        )
+                ),
     ],
     style={'backgroundColor': colors['background']}
 )
@@ -251,13 +310,82 @@ def get_bs(dos, vasprun_bands, kpts_bands):
 #    return json.dumps(bs.as_dict(), cls=MyEncoder)
 
 
+@app.callback(Output('options', 'children'),
+              [Input('vasprun_dos', 'value'),
+               Input('vasprun_bands', 'value')])  
+def get_options_all(vasprun_dos, vasprun_bands):
+    
+    ## determine full list of options and store in hidden div
+    if vasprun_dos: vasprun = vasprun_dos
+    elif vasprun_bands: vasprun = vasprun_bands
+    structure = Vasprun(vasprun).structures[-1]  
+    
+    ## determine if sub-orbital projections exist. If so, set lm = True  
+#    orbs = [Orbital.__str__(orb) for atom_dos in vasprun.complete_dos.pdos.values()
+#                                 for orb,pdos in atom_dos.items()]            
+#    lm = any(["x" in s for s in orbs])
+    
+    ## determine the list of unique elements in the system    
+    elems = [str(site.specie) for site in structure.sites]   
+    ## remove duplicate entries    
+    options = dict.fromkeys(elems)
+    
+    ## generate the full list of options with sub-orbital projections
+    for elem in options:
+        options[elem] = {elem+' Total': None,
+                         elem+' s': [elem+' s']}
+        if Element(elem).block == 'p' or Element(elem).block == 'd':
+            options[elem].update({elem+' p': [elem+' px',elem+' py',elem+' pz']})
+        if Element(elem).block == 'd':
+            options[elem].update({elem+' d': [elem+' dxy',elem+' dxy',elem+' dxy',
+                                              elem+' dx2-y2',elem+' dz2']})
+    options.update({'Total':{'Total': None}})
+    
+    return options
+
+    
+@app.callback(Output('species-dropdown', 'options'),
+              [Input('options', 'children')])  
+def set_elem_options(options):
+    return [{'label': i, 'value': i} for i in options]
+    
+
+@app.callback(Output('orb-dropdown', 'options'),
+              [Input('options', 'children'),
+               Input('species-dropdown', 'value')])
+def set_orb_options(options,selected_species):
+    return [{'label': orb, 'value': orb} 
+            for sp in selected_species 
+            for orb in options[sp]]
+
+
+@app.callback(Output('suborb-dropdown', 'options'),
+              [Input('options', 'children'),
+               Input('species-dropdown', 'value'),
+               Input('orb-dropdown', 'value')])
+def set_suborb_options(options,selected_species, selected_orb):
+    return [{'label': suborb, 'value': suborb}
+            for orb in selected_orb
+            if orb.split()[0] in selected_species
+            for suborb in options[orb.split()[0]][orb]]
+
+
+@app.callback(
+    dash.dependencies.Output('display-selected-values', 'children'),
+    [dash.dependencies.Input('suborb-dropdown', 'value')])
+def set_display_children(selected_suborb):
+    if len(selected_suborb) > 0:       
+        return '{} sub-orbital projections have been selected'.format(selected_suborb)
+    else:       
+        return 'No sub-orbital projections have been selected'
+
+
 @app.callback(Output('DOS_bands', 'figure'),
               [Input('submit_button', 'n_clicks'),
                Input('dos_object', 'children'),
                Input('bs_object', 'children')],
-              [State('select_elem', 'value'),
-               State('select_orb', 'value')])
-def update_bandsfig(n_clicks, dos, bs, elems, orbs):
+              [State('orb-dropdown', 'value')])
+def update_bandsfig(n_clicks, dos, bs, projlist):
     ## figure updates when the inputs change or the button is clicked
     ## figure does NOT update when elements or orbitals are selected    
     ## de-serialize dos and bs from json format to pymatgen objects
@@ -266,7 +394,7 @@ def update_bandsfig(n_clicks, dos, bs, elems, orbs):
     if bs:
         bs = BandStructureSymmLine.from_dict(json.loads(bs))
     ## update the band structure and dos figure
-    dosbandfig = BandsFig().generate_fig(dos, bs, elems, orbs)
+    dosbandfig = BandsFig().generate_fig(dos, bs, projlist)
     return dosbandfig
 
 
@@ -297,20 +425,6 @@ def update_structfig(vasprun_dos, vasprun_bands):
     structure = Vasprun(vasprun).structures[-1]
     structfig = StructFig().generate_fig(structure)
     return structfig
-
-
-@app.callback(Output('select_elem', 'options'),
-              [Input('vasprun_dos', 'value'),
-               Input('vasprun_bands', 'value')])  
-def update_elem_options(vasprun_dos, vasprun_bands):
-    ## get list of elements in the system to display as options
-    if vasprun_dos: vasprun = vasprun_dos
-    elif vasprun_bands: vasprun = vasprun_bands
-    structure = Vasprun(vasprun).structures[-1]  
-    elems = [str(site.specie) for site in structure.sites]   
-    ## remove duplicate entries      
-    elems = list(dict.fromkeys(elems))
-    return [{'label': i, 'value': i} for i in elems]
 
 
 #@app.callback(Output('select_atom', 'children'),
