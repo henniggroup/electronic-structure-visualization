@@ -42,7 +42,7 @@ Note: this isn't meant to replace the structure figure which can be generated mo
 
 Currently:
 * atoms colored using same color scheme as jmol
-* clickable atoms (text below the figure indicates the selected atom)
+* clickable atoms
 
 Future:
 * connect the structure figure to the band structure figure so that the user can select the atom to project onto by clicking on the atom in the structure figure
@@ -52,7 +52,7 @@ Future:
 Currently:
 * user can select the element(s) and orbitals(s) they want to view projections onto
 * new plot is generated only upon clicking "Generate Plot" button
-* band structure element projections are represented using "fat bands" (there is an option in the script to plot the band structure element projections as colored bands, but the way it is currently being implemented is very slow...)
+* band structure element projections are represented using "fat bands" (there is an option in the script to plot the band structure element projections as colored bands, but the way it is implemented is very slow so this option is currently disabled...)
 * band structure orbital projections are represented using "fat bands" 
 * up-spin contributions plotted as filled circles, down-spin contributions (if computed) plotted as empty circles
 * user can turn on and off individual traces by clicking on the legend on the right
@@ -73,5 +73,7 @@ Future:
 * enable projections onto selected atoms and/or sub-orbitals
 
 
-NEW as of 11/07/2018:
-* user can choose to plot *only* the band structure *or* density of states by specifying only that one `vasprun.xml` file in the appropriate field. If `vasprun.xml` files are specified in both fields, the combined band structure and density of states plot is generated.
+NEW as of 08/27/2018:
+* Changed the method for selecting elements and orbitals for projection -- responsive dropdown lists enable users to select specific element + orbital combinations easily
+* compatible with Dash v1.0
+
