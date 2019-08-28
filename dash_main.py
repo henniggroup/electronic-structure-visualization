@@ -39,74 +39,157 @@ app.css.append_css({"external_url": "https://codepen.io/chriddyp/pen/bWLwgP.css"
 mathjax = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML'
 app.scripts.append_script({'external_url': mathjax})
 
-## set colors
-colors = {'background': '#FFFFFF',
-          'text1': '#0021A5',
-          'text2': '#FA4616'
-          }
-
 
 app.layout = html.Div([
     
     html.H3('Interactive Electronic Structure Visualization Tool',
             style={'textAlign': 'center',
-                   'color': colors['text1']
+                   'color': '#0021A5'
                    }
             ), 
 
     html.Div('currently a work in progress by Anne Marie Tan :)',
              style={'textAlign': 'center',
-                    'color': colors['text2'],
-                    'marginBottom': '20'
+                    'color': '#FA4616',
+                    'marginBottom': '20px'
                    }
             ),
+   
+    html.Div([
+            
+        ## hack whitespace between inline-blocks
+        html.Div(style={'display': 'inline-block',
+                        'width': '5%'
+                       }
+                ),
+        
+        ## boxes to input path to local data
+        html.Div([
+            html.Div('From local data:',
+                     style={'display': 'block'
+                            }
+                     ),
+            dcc.Input(id='vasprun_dos',
+                      type='text',
+                      value='',
+                      placeholder='input path to vasprun.xml file from DoS calculation',
+                      style={'display': 'block',
+                             'height': '30px',
+                             'width': '100%',
+                             'marginBottom': '5px',
+                             'borderWidth': '1px',
+                             'textAlign': 'center'
+                             }
+                      ),
+            
+            dcc.Input(id='vasprun_bands',
+                      type='text',
+                      value='',
+                      placeholder='input path to vasprun.xml file from bands calculation',
+                      style={'display': 'block',
+                             'height': '30px',
+                             'width': '100%',
+                             'marginBottom': '5px',
+                             'borderWidth': '1px',
+                             'textAlign': 'center'
+                             }
+                      ),
+            
+            dcc.Input(id='kpts_bands',
+                      type='text',
+                      value='',
+                      placeholder='input path to KPOINTS file from bands calculation',
+                      style={'display': 'block',
+                             'height': '30px',
+                             'width': '100%',
+                             'borderWidth': '1px',
+                             'textAlign': 'center'
+                             }
+                      )
+                ],
+                style={'display': 'inline-block',
+                       'width': '30%',
+                       'verticalAlign': 'top'
+                       }
+                ),
+        
+        ## hack whitespace between inline-blocks
+        html.Div(style={'display': 'inline-block',
+                        'width': '10%'
+                       }
+                ),
+    
+        ## dropdown lists for selecting projections
+        html.Div([
+            html.Div('Select projections:',
+                     style={'display': 'block'
+                            }
+                     ),
+    
+            dcc.Dropdown(
+                id='species-dropdown',
+                placeholder='select species',
+                multi=True,
+                style={'display': 'block',
+                       'height': '34px',
+                       'width': '100%',
+                       'marginBottom': '5px',
+                       'borderWidth': '1px'}
+                        ),
 
-    ## boxes to input path to local data
-    html.Div('From local data:',
-             style={'marginLeft': '50'
+            dcc.Dropdown(
+                id='orb-dropdown',
+                placeholder='select orbital',
+                multi=True,
+                style={'display': 'block',
+                       'height': '34px',
+                       'width': '100%',
+                       'marginBottom': '5px',
+                       'borderWidth': '1px'}
+                        ),
+            
+            dcc.Dropdown(
+                id='suborb-dropdown',
+                placeholder='select sub-orbital',
+                multi=True,
+                style={'display': 'block',
+                       'height': '34px',
+                       'width': '100%',
+                       'borderWidth': '1px'}
+                        ),
+            
+#            html.Div(id='display-selected-values',
+#                     style={'display': 'block'
+#                            }
+#                     ),
+                ],
+                style={'display': 'inline-block',
+                       'width': '30%',
+                       'verticalAlign': 'top'
+                       }
+                ),
+    
+        ## hack whitespace between inline-blocks
+        html.Div(style={'display': 'inline-block',
+                        'width': '10%'
+                       }
+                ),
+        
+        ## button to click to generate bands+dos figure
+        html.Button(id='submit_button',
+                    n_clicks=0,
+                    children='Generate plot',
+                    style={'display': 'inline-block',
+                           'height': '50px',
+                           'width': '10%',
+                           'verticalAlign': 'bottom'
+                           }
+                    ),            
+            ],
+            style={'display': 'block',
+                   'marginBottom': '20px'
                    }
             ),
-    
-    dcc.Input(id='vasprun_dos',
-              type='text',
-              value='',
-              placeholder='input path to vasprun.xml file from DoS calculation',
-              style={'display': 'block',
-                     'width': '30%',
-                     'height': '30px',
-                     'marginLeft': '50',
-                     'marginBottom': '5',
-                     'borderWidth': '1px',
-                     'textAlign': 'center'
-                     }
-              ),
-    
-    dcc.Input(id='vasprun_bands',
-              type='text',
-              value='',
-              placeholder='input path to vasprun.xml file from bands calculation',
-              style={'display': 'block',
-                     'width': '30%',
-                     'height': '30px',
-                     'marginLeft': '50',
-                     'marginBottom': '5',
-                     'borderWidth': '1px',
-                     'textAlign': 'center'
-                     }
-              ),
-    
-    dcc.Input(id='kpts_bands',
-              type='text',
-              value='',
-              placeholder='input path to KPOINTS file from bands calculation',
-              style={'display': 'block',
-                     'width': '30%',
-                     'height': '30px',
-                     'marginLeft': '50',
-                     'borderWidth': '1px',
-                     'textAlign': 'center'\
-                     }
-              ),
     
 #    html.Div('From Materials Project data:',
 #             style={'marginLeft': '50'
@@ -125,6 +208,11 @@ app.layout = html.Div([
 #                     'borderWidth': '1px',
 #                     'textAlign': 'center'}
 #              ),
+
+
+    ## hidden div used to store the full dict of options
+    html.Div(id='options', 
+             style={'display': 'none'}),
     
     ## hidden divs used to store dos and bs objects
     html.Div(id='dos_object', 
@@ -133,23 +221,29 @@ app.layout = html.Div([
     html.Div(id='bs_object', 
              style={'display': 'none'}),
 
-    ## our simple clickable structure figure!
-    dcc.Graph(id='unitcell',
-              figure={'data': []},
-              style={'display': 'inline-block',
-                     'width': '30%',
-                     'height': '600'
-                     }
-              ),
-
-    ## our interactive bands+dos figure!
-    dcc.Graph(id='DOS_bands',
-              figure={'data': []},
-              style={'display': 'inline-block',
-                     'width': '70%',
-                     'height': '600'
-                     }
-              ),
+    html.Div([
+        ## our simple clickable structure figure!
+        dcc.Graph(id='unitcell',
+                  figure={'data': []},
+                  style={'display': 'inline-block',
+                         'width': '30%',
+                         'height': '100%'
+                         }
+                  ),
+    
+        ## our interactive bands+dos figure!
+        dcc.Graph(id='DOS_bands',
+                  figure={'data': []},
+                  style={'display': 'inline-block',
+                         'width': '65%',
+                         'height': '100%'
+                         }
+                  ),
+            ],
+            style={'display': 'block',
+                   'height': '600px'
+                   }
+            ),
 
     ## this div tells which atom was selected (temporary)
 #    html.Div(id='select_atom',
@@ -159,64 +253,7 @@ app.layout = html.Div([
 #                   'marginLeft': '100'
 #                   }
 #        ),
-
-    html.Div('Select projections:',
-             style={'margin': 'auto',
-                    'width': '30%'
-                    }
-            ),
     
-    ## hidden divs used to store the full dict of options
-    html.Div(id='options', 
-             style={'display': 'none'}),
-        
-    html.Div(
-        dcc.Dropdown(
-            id='species-dropdown',
-            placeholder='select species',
-            multi=True
-            ),
-            style={'margin': 'auto',
-                   'width': '30%',
-                   'height': '30px',
-                   'marginBottom': '10px',
-                   'borderWidth': '1px'
-                    }
-        ),
-
-    html.Div(
-        dcc.Dropdown(
-            id='orb-dropdown',
-            placeholder='select orbital',
-            multi=True
-            ),
-            style={'margin': 'auto',
-                   'width': '30%',
-                   'height': '30px',
-                   'marginBottom': '10px',
-                   'borderWidth': '1px'
-                    }
-        ),
-        
-    html.Div(
-        dcc.Dropdown(
-            id='suborb-dropdown',
-            placeholder='select sub-orbital',
-            multi=True
-            ),
-            style={'margin': 'auto',
-                   'width': '30%',
-                   'height': '30px',
-                   'marginBottom': '10px',
-                   'borderWidth': '1px'
-                    }
-        ),
-
-    html.Div(id='display-selected-values',
-             style={'margin': 'auto',
-                    'width': '30%'
-                    }
-            ),
 
 #    ## this div contains the checklist for selecting element projections
 #    html.Div(['Element(s) to project onto:',
@@ -247,17 +284,8 @@ app.layout = html.Div([
 #               }
 #        ),
     
-    ## button to click to generate bands+dos figure
-    html.Button(id='submit_button',
-                n_clicks=0,
-                children='Generate plot',
-                style={'position': 'fixed',
-                       'left': '40%',
-                       'width': '20%'
-                       }
-                ),
     ],
-    style={'backgroundColor': colors['background']}
+    style={'backgroundColor': '#FFFFFF'}
 )
 
 
@@ -337,7 +365,7 @@ def get_options_all(vasprun_dos, vasprun_bands):
         if Element(elem).block == 'p' or Element(elem).block == 'd':
             options[elem].update({elem+' p': [elem+' px',elem+' py',elem+' pz']})
         if Element(elem).block == 'd':
-            options[elem].update({elem+' d': [elem+' dxy',elem+' dxy',elem+' dxy',
+            options[elem].update({elem+' d': [elem+' dxz',elem+' dyz',elem+' dxy',
                                               elem+' dx2-y2',elem+' dz2']})
     options.update({'Total':{'Total': None}})
     
@@ -370,14 +398,14 @@ def set_suborb_options(options,selected_species, selected_orb):
             for suborb in options[orb.split()[0]][orb]]
 
 
-@app.callback(
-    dash.dependencies.Output('display-selected-values', 'children'),
-    [dash.dependencies.Input('suborb-dropdown', 'value')])
-def set_display_children(selected_suborb):
-    if len(selected_suborb) > 0:       
-        return '{} sub-orbital projections have been selected'.format(selected_suborb)
-    else:       
-        return 'No sub-orbital projections have been selected'
+#@app.callback(
+#    dash.dependencies.Output('display-selected-values', 'children'),
+#    [dash.dependencies.Input('suborb-dropdown', 'value')])
+#def set_display_children(selected_suborb):
+#    if len(selected_suborb) > 0:       
+#        return '{} sub-orbital projections have been selected'.format(selected_suborb)
+#    else:       
+#        return 'No sub-orbital projections have been selected'
 
 
 @app.callback(Output('DOS_bands', 'figure'),
