@@ -3,6 +3,11 @@
 This is an ongoing effort to develop an interactive tool for visualizing full electronic structures of materials. It is in its very early stages so there will probably be bugs, so please be patient! Please send any questions or feedback to Anne Marie at annemarietan@ufl.edu :smiley:.
 
 
+NEW as of 08/27/2019:
+* Changed the method for selecting elements and orbitals for projection -- responsive dropdown lists enable users to select specific element + orbital combinations easily
+* compatible with Dash v1.0
+
+
 ## Installation:
 1. First, you will need to have python installed. We suggest using [anaconda/miniconda](https://conda.io/docs/user-guide/install/index.html)
 2. Make sure you have the following python packages installed: 
@@ -73,7 +78,24 @@ Future:
 * enable projections onto selected atoms and/or sub-orbitals
 
 
-NEW as of 08/27/2018:
-* Changed the method for selecting elements and orbitals for projection -- responsive dropdown lists enable users to select specific element + orbital combinations easily
-* compatible with Dash v1.0
+## Authors:
+Anne Marie Z. Tan
 
+Richard G. Hennig
+
+
+## How to cite:
+BibTex entry for this Github repository::
+
+```
+   @misc{electronic-structure-visualization,
+     title        = {Full electronic structure visualization tool},
+     author       = {A. M. Z Tan and R. G. Hennig},
+     year         = 2019,
+     publisher    = {GitHub},
+     journal      = {GitHub repository},
+     howpublished = {\url{https://github.com/henniggroup/electronic-structure-visualization}},
+     url          = {https://github.com/henniggroup/electronic-structure-visualization},
+     doi          = {}
+   }
+```
