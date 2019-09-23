@@ -2,6 +2,7 @@
 
 This is an ongoing effort to develop an interactive tool for visualizing full electronic structures of materials. It is in its very early stages so there will probably be bugs, so please be patient! Please send any questions or feedback to Anne Marie at annemarietan@ufl.edu :smiley:.
 
+![screenshot of visualization tool](https://github.com/henniggroup/electronic-structure-visualization/blob/master/screenshot2.png)
 
 NEW as of 08/27/2019:
 * Changed the method for selecting elements and orbitals for projection -- responsive dropdown lists enable users to select specific element + orbital combinations easily
