@@ -4,6 +4,9 @@ This is an ongoing effort to develop an interactive tool for visualizing full el
 
 ![screenshot of visualization tool](https://github.com/henniggroup/electronic-structure-visualization/blob/master/screenshot2.png)
 
+NEW as of 11/11/2019:
+* Implemented sub-orbital projections for the density of states plot! Sub-orbital projections for the band structure plot coming soon...
+
 NEW as of 08/27/2019:
 * Changed the method for selecting elements and orbitals for projection -- responsive dropdown lists enable users to select specific element + orbital combinations easily
 * compatible with Dash v1.0
@@ -11,11 +14,11 @@ NEW as of 08/27/2019:
 
 ## Installation:
 1. First, you will need to have python installed. We suggest using [anaconda/miniconda](https://conda.io/docs/user-guide/install/index.html)
-2. Make sure you have the following python packages installed: 
-	* numpy
-	* pymatgen
-	* plotly
-	* dash
+2. Have the following python packages installed (the latest version of each package that this tool has been tested on is listed in parenthesis): 
+	* numpy (v. 1.15.4)
+	* pymatgen (v. 2019.10.16)
+	* plotly (v. 3.3.0)
+	* dash (v. 1.1.1)
 	* mendeleev
 3. Simply download the scripts in this repository and you are good to go!
 
@@ -70,13 +73,13 @@ Future:
 
 ## Density of states figure:
 Currently:
-* user can select the element(s) and orbitals(s) they want to view projections onto
+* user can select the element(s) orbitals(s) and/or sub-orbitals(s) they want to view projections onto
 * new plot is generated only upon clicking "Generate Plot" button
 * up-spin contributions plotted as solid lines, down-spin contributions (if computed) plotted as dashed lines
 * user can turn on and off individual traces by clicking on the legend on the right
 
 Future:
-* enable projections onto selected atoms and/or sub-orbitals
+* enable projections onto selected atoms
 
 
 ## Authors:

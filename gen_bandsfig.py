@@ -1,10 +1,12 @@
 from mendeleev import element
 import numpy as np
 
+import suborb_utils as sub
+
 from pymatgen.ext.matproj import MPRester
 from pymatgen.io.vasp.outputs import Vasprun
 from pymatgen.core.periodic_table import Element
-from pymatgen.electronic_structure.core import Spin, OrbitalType
+from pymatgen.electronic_structure.core import Spin, Orbital, OrbitalType
 from pymatgen.electronic_structure.plotter import BSPlotter
 
 import plotly.plotly as pltly      ## plotting functions
@@ -20,11 +22,29 @@ class BandsFig:
     
         ## define some styling choices??
         self.spins = {'up': Spin.up,'down': Spin.down}
-        self.orbs = {'s': OrbitalType.s,'p': OrbitalType.p,'d': OrbitalType.d}  
-        self.fillcolors = {'s':{'up':'rgba(255,0,0,1)','down':'rgba(255,0,0,0)'},
-                           'p':{'up':'rgba(0,128,0,1)','down':'rgba(0,128,0,0)'},
-                           'd':{'up':'rgba(0,0,255,1)','down':'rgba(0,0,255,0)'}}   
-        self.edgecolors = {'s':'rgb(255,0,0)','p':'rgb(0,128,0)','d':'rgb(0,0,255)'}
+        self.orbs = {'s': OrbitalType.s,
+                     'p': OrbitalType.p,'px': Orbital.px,
+                     'py': Orbital.py,'pz': Orbital.pz,
+                     'd': OrbitalType.d,'dz2': Orbital.dz2,
+                     'dx2-y2': Orbital.dx2,'dxy': Orbital.dxy,
+                     'dxz': Orbital.dxz,'dyz': Orbital.dyz}  
+        self.fillcolors = {'s':{'up':'rgba(255,153,0,1)','down':'rgba(255,153,0,0)'},
+                           'p':{'up':'rgba(255,0,0,1)','down':'rgba(255,0,0,0)'},
+                           'px':{'up':'rgba(153,0,0,1)','down':'rgba(153,0,0,0)'},
+                           'py':{'up':'rgba(255,0,0,1)','down':'rgba(255,0,0,0)'},
+                           'pz':{'up':'rgba(250,128,114,1)','down':'rgba(250,128,114,0)'},
+                           'd':{'up':'rgba(0,0,255,1)','down':'rgba(0,0,255,0)'},
+                           'dz2':{'up':'rgba(0,0,153,1)','down':'rgba(0,0,153,0)'},
+                           'dx2-y2':{'up':'rgba(51,102,204,1)','down':'rgba(51,102,204,0)'},
+                           'dxy':{'up':'rgba(102,255,204,1)','down':'rgba(102,255,204,0)'},
+                           'dxz':{'up':'rgba(51,204,51,1)','down':'rgba(51,204,51,0)'},
+                           'dyz':{'up':'rgba(0,102,0,1)','down':'rgba(0,102,0,0)'}}   
+        self.edgecolors = {'s':'rgb(255,153,0)',
+                           'p':'rgb(255,0,0)','px':'rgb(153,0,0)',
+                           'py':'rgb(255,0,0)','pz':'rgb(250,128,114)',
+                           'd':'rgb(0,0,255)','dz2':'rgb(0,0,153)',
+                           'dx2-y2':'rgb(51,102,204)','dxy':'rgb(102,255,204)',
+                           'dxz':'rgb(51,204,51)','dyz':'rgb(0,102,0)'}
         self.arrows = {'up':u'\u2191','down':u'\u2193'}
  
 
@@ -42,8 +62,19 @@ class BandsFig:
 
         return
     
+
+    def get_erange_dos(self, dos):
+        
+        ## Determine energy ranges for the plots
+        cbm, vbm = dos.get_cbm_vbm()
+        if cbm-vbm < 0.01:
+            return [-10,10]
+        else:
+            return [vbm - dos.efermi - 4,
+                    cbm - dos.efermi + 4]
+            
     
-    def get_erange(self, bs):
+    def get_erange_bs(self, bs):
         
         ## Determine energy ranges for the plots    
         if bs.is_metal():
@@ -109,18 +140,18 @@ class BandsFig:
         return labels_uniq, labelspos_uniq
 
    
-    def get_el_contrib(self,x,pbands,band,elems,spin):
-        
-        ## compute normalized contribution from each element        
-        contrib = np.zeros((len(x),len(elems)))
-        for k in range(len(x)):
-            temp = [pbands[self.spins[spin]][band][k][elem]**2 for elem in elems]
-            tot = np.sum(temp)
-            if tot != 0.0:
-                for e in range(len(temp)):
-                    contrib[k,e] = temp[e]/tot
-                        
-        return contrib
+#    def get_el_contrib(self,x,pbands,band,elems,spin):
+#        
+#        ## compute normalized contribution from each element        
+#        contrib = np.zeros((len(x),len(elems)))
+#        for k in range(len(x)):
+#            temp = [pbands[self.spins[spin]][band][k][elem]**2 for elem in elems]
+#            tot = np.sum(temp)
+#            if tot != 0.0:
+#                for e in range(len(temp)):
+#                    contrib[k,e] = temp[e]/tot
+#                        
+#        return contrib
     
 
     def get_dosTraces_tot(self, dos):
@@ -155,20 +186,18 @@ class BandsFig:
                           )
 
     
-    def get_dosTraces_el(self, dos, elems):
+    def get_dosTraces_el(self, dos, elem):
         
         ## get line plots for the element and orbital projections of DoS 
-    
-        self.get_elemcolors(elems)
+
         el_dos = dos.get_element_dos()
                 
         dosTraces = list()
-        for elem in elems:
-            ## plot up-spin contributions
-            dosTraces.append(self.dosTrace_el(dos,el_dos,elem,spin='up'))
-            ## plot down-spin contributions if spin-polarized calculation
-            if len(el_dos[Element(elem)].densities) == 2:
-                dosTraces.append(self.dosTrace_el(dos,el_dos,elem,spin='down'))
+        ## plot up-spin contributions
+        dosTraces.append(self.dosTrace_el(dos,el_dos,elem,spin='up'))
+        ## plot down-spin contributions if spin-polarized calculation
+        if len(el_dos[Element(elem)].densities) == 2:
+            dosTraces.append(self.dosTrace_el(dos,el_dos,elem,spin='down'))
         
         return dosTraces
 
@@ -189,19 +218,18 @@ class BandsFig:
                           )
         
     
-    def get_dosTraces_spd(self, dos, elem, orbs):
+    def get_dosTraces_spd(self, dos, elem, orb):
         
         ## get line plots for the element and orbital projections of DoS 
     
         el_spd_dos = dos.get_element_spd_dos(elem)
                 
         dosTraces = list()
-        for orb in orbs: 
-            ## plot up-spin contributions
-            dosTraces.append(self.dosTrace_spd(dos,el_spd_dos,elem,orb,spin='up'))
-            ## plot down-spin contributions if spin-polarized calculation
-            if len(el_spd_dos[self.orbs[orb]].densities) == 2:
-                dosTraces.append(self.dosTrace_spd(dos,el_spd_dos,elem,orb,spin='down'))
+        ## plot up-spin contributions
+        dosTraces.append(self.dosTrace_spd(dos,el_spd_dos,elem,orb,spin='up'))
+        ## plot down-spin contributions if spin-polarized calculation
+        if len(el_spd_dos[self.orbs[orb]].densities) == 2:
+            dosTraces.append(self.dosTrace_spd(dos,el_spd_dos,elem,orb,spin='down'))
         
         return dosTraces
 
@@ -220,7 +248,40 @@ class BandsFig:
                           name = "DoS: "+elem+" "+orb+" "+self.arrows[spin],
                           line = linestyle
                           )
+ 
+
+    def get_dosTraces_suborb(self, dos, elem, suborb):
         
+        ## get line plots for the element and sub-orbital projections of DoS 
+    
+#        el_spd_dos = dos.get_element_spd_dos(elem)
+        el_suborb_dos = sub.get_element_pdos(dos,elem)
+                
+        dosTraces = list()
+        ## plot up-spin contributions
+        dosTraces.append(self.dosTrace_suborb(dos,el_suborb_dos,elem,suborb,spin='up'))
+        ## plot down-spin contributions if spin-polarized calculation
+        if len(el_suborb_dos[self.orbs[suborb]].densities) == 2:
+            dosTraces.append(self.dosTrace_spd(dos,el_suborb_dos,elem,suborb,spin='down'))
+        
+        return dosTraces
+
+
+    def dosTrace_suborb(self,dos,el_suborb_dos,elem,suborb,spin):
+        
+        ## generates, formats, and returns a line trace for the sub-orbital projected DoS
+        
+        linestyle = dict(color=self.edgecolors[suborb])
+        if spin == 'down':
+            linestyle['dash'] = 'dot'
+        
+        return go.Scatter(x = el_suborb_dos[self.orbs[suborb]].densities[self.spins[spin]],
+                          y = dos.energies - dos.efermi,
+                          mode = "lines",
+                          name = "DoS: "+elem+" "+suborb+" "+self.arrows[spin],
+                          line = linestyle
+                          )
+       
 
     def get_bandTraces(self, bs):
         
@@ -369,28 +430,27 @@ class BandsFig:
                           )
 
     
-    def get_fatbandTraces_spd(self, bs, elem, orbs):
+    def get_fatbandTraces_spd(self, bs, elem, orb):
                 
         ## get dot plots for the projected band structure
         ## dot sizes proportionl to the relative contribution from that orbital
         
         bandrange = self.get_bandrange(bs)
         [x,yu,yd] = self.get_bandsxy(bs, bandrange) 
-        pbands = bs.get_projections_on_elements_and_orbitals({elem: orbs})
+        pbands = bs.get_projections_on_elements_and_orbitals({elem: [orb]})
         
         ## Each band is plotted as a separate scatter trace
         ## and appended to the list fatbandTraces 
-        fatbandTraces = list()
-        for orb in orbs: 
-            ## plot up-spin contributions
+        fatbandTraces = list() 
+        ## plot up-spin contributions
+        for b,band in enumerate(bandrange):
+            fatbandTraces.append(self.fatbandTrace_spd(x,yu[b],pbands,band,elem,orb,'up'))
+        fatbandTraces[-1].showlegend = True  ## show only 1 legend for all traces in the group
+        ## plot down-spin contributions if spin-polarized calculation
+        if bs.is_spin_polarized:
             for b,band in enumerate(bandrange):
-                fatbandTraces.append(self.fatbandTrace_spd(x,yu[b],pbands,band,elem,orb,'up'))
-            fatbandTraces[-1].showlegend = True  ## show only 1 legend for all traces in the group
-            ## plot down-spin contributions if spin-polarized calculation
-            if bs.is_spin_polarized:
-                for b,band in enumerate(bandrange):
-                    fatbandTraces.append(self.fatbandTrace_spd(x,yd[b],pbands,band,elem,orb,'down'))
-                fatbandTraces[-1].showlegend = True
+                fatbandTraces.append(self.fatbandTrace_spd(x,yd[b],pbands,band,elem,orb,'down'))
+            fatbandTraces[-1].showlegend = True
         
         return fatbandTraces
 
@@ -509,22 +569,22 @@ class BandsFig:
             
             if projlist != None:
                 for proj in projlist:
-                    elem,orb = proj.split()
+                    elem, orb = proj.split()[0], proj.split()[1]
                     if orb == "Total":
                         ## get fat band structure colored by element
                         fatbandTraces = self.get_fatbandTraces_el(bs, elem)
                         ## add the fat bands to subplot (1,1)
                         for fbtrace in fatbandTraces:
                             dosbandfig.append_trace(fbtrace, 1, 1)
-                    elif orb == 's' or orb == 'p' or orb == 'd':
+                    elif orb[0] == 's' or orb[0] == 'p' or orb[0] == 'd':
                         ## get the fat bands colored by orbital
-                        fatbandTraces = self.get_fatbandTraces_spd(bs, elem, [orb])
+                        fatbandTraces = self.get_fatbandTraces_spd(bs, elem, orb[0])
                         ## add the fat bands to subplot (1,1)
                         for fbtrace in fatbandTraces:
                             dosbandfig.append_trace(fbtrace, 1, 1)                                         
 
             ## format axes        
-            erange = self.get_erange(bs)
+            erange = self.get_erange_bs(bs)
             labels_uniq, labelspos_uniq = self.get_kpt_labels(bs)
             bandLayout = self.layout_bands(erange, labels_uniq, labelspos_uniq)            
             dosbandfig["layout"].update(
@@ -544,19 +604,19 @@ class BandsFig:
             
             if projlist != None:
                 for proj in projlist:
-                    elem,orb = proj.split()
+                    elem, orb = proj.split()[0], proj.split()[1]
                     if orb == "Total":
                         ## get element projected density of states
-                        eldosTraces = self.get_dosTraces_el(dos, [elem])
-                        ## add the densities to subplot (1,2)
-                        for dosTrace in eldosTraces:
-                            dosbandfig.append_trace(dosTrace, 1, 2) 
+                        dosTraces = self.get_dosTraces_el(dos, elem)
                     elif orb == 's' or orb == 'p' or orb == 'd':            
                         ## get spd projected density of states
-                        dosTraces = self.get_dosTraces_spd(dos, elem, [orb])
-                        ## add the densities to subplot (1,2)
-                        for dosTrace in dosTraces:
-                            dosbandfig.append_trace(dosTrace, 1, 2)
+                        dosTraces = self.get_dosTraces_spd(dos, elem, orb)
+                    else:
+                        ## get full sub-orbital projected density of states
+                        dosTraces = self.get_dosTraces_suborb(dos, elem, orb)
+                    ## add the densities to subplot (1,2)
+                    for dosTrace in dosTraces:
+                        dosbandfig.append_trace(dosTrace, 1, 2)
             
             ## format axes
             dosLayout = self.layout_dos(dos)            
@@ -567,6 +627,7 @@ class BandsFig:
                 )
             )            
             if not bs:
+                dosLayout["yaxis"].range = self.get_erange_dos(dos)
                 dosbandfig["layout"].update(
                     go.Layout(
                         title="Density of states",
@@ -583,104 +644,7 @@ class BandsFig:
         elif dos and not bs:
             dosbandfig["layout"]["xaxis2"]["domain"] = [0.4, 0.7]
         
-        return dosbandfig   
-    
-
-#    def generate_fig(self, dos, bs, elems, orbs):
-#                
-#        dosbandfig = tls.make_subplots(rows=1, cols=2, shared_yaxes=True)
-#        
-#        if bs:
-#            ## add total band structure
-#            bandTraces = self.get_bandTraces(bs)
-#            ## add the total band structure to subplot (1,1)
-#            for btrace in bandTraces:
-#                dosbandfig.append_trace(btrace, 1, 1)        
-#            if 'total' in orbs:
-##                ## add colored band structure
-##                if len(elems) > 1: ## if more than 1 element
-##                    colorbandTraces = self.get_colorbandTraces(bs, elems)
-##                    ## add the colored band structure to subplot (1,1)
-##                    for cbtrace in colorbandTraces:
-##                        for cbt in cbtrace:
-##                            dosbandfig.append_trace(cbt, 1, 1) 
-#                ## add fat band structure
-#                for elem in elems:                
-#                    ## add the fat bands
-#                    fatbandTraces = self.get_fatbandTraces_el(bs, elem)
-#                    ## add the fat bands to subplot (1,1)
-#                    for fbtrace in fatbandTraces:
-#                        dosbandfig.append_trace(fbtrace, 1, 1)                                              
-#            ## if any orbital projections are selected
-#            orbs1 = [b for b in orbs if b != "total"] 
-#            if len(orbs1) > 0:
-#                for elem in elems:
-#                    ## add the fat bands
-#                    fatbandTraces = self.get_fatbandTraces_spd(bs, elem, orbs1)
-#                    ## add the fat bands to subplot (1,1)
-#                    for fbtrace in fatbandTraces:
-#                        dosbandfig.append_trace(fbtrace, 1, 1)                    
-#
-#            ## format axes        
-#            erange = self.get_erange(bs)
-#            labels_uniq, labelspos_uniq = self.get_kpt_labels(bs)
-#            bandLayout = self.layout_bands(erange, labels_uniq, labelspos_uniq)            
-#            dosbandfig["layout"].update(
-#                go.Layout(
-#                    title="Band structure",
-#                    xaxis1=bandLayout["xaxis"],
-#                    yaxis1=bandLayout["yaxis"]
-#                )
-#            )
-#                        
-#        if dos:
-#            ## add total density of states
-#            dosTraces = self.get_dosTraces_tot(dos)
-#            ## add the densities to subplot (1,2)
-#            for dosTrace in dosTraces:
-#                dosbandfig.append_trace(dosTrace, 1, 2)
-#            if 'total' in orbs:                     
-#                ## add element projected density of states
-#                eldosTraces = self.get_dosTraces_el(dos, elems)
-#                ## add the densities to subplot (1,2)
-#                for dosTrace in eldosTraces:
-#                    dosbandfig.append_trace(dosTrace, 1, 2)   
-#            ## if any orbital projections are selected
-#            orbs1 = [b for b in orbs if b != "total"] 
-#            if len(orbs1) > 0:
-#                for elem in elems:                  
-#                    ## add projected density of states
-#                    dosTraces = self.get_dosTraces_spd(dos, elem, orbs1)
-#                    ## add the densities to subplot (1,2)
-#                    for dosTrace in dosTraces:
-#                        dosbandfig.append_trace(dosTrace, 1, 2)
-#            
-#            ## format axes
-#            dosLayout = self.layout_dos(dos)            
-#            dosbandfig["layout"].update(
-#                go.Layout(
-#                    title="Band structure and density of states",
-#                    xaxis2=dosLayout["xaxis"]
-#                )
-#            )            
-#            if not bs:
-#                dosbandfig["layout"].update(
-#                    go.Layout(
-#                        title="Density of states",
-#                        yaxis1=dosLayout["yaxis"]
-#                    )
-#                )
-#    
-#        ## adjust size of subplots
-#        if bs and dos:
-#            dosbandfig["layout"]["xaxis1"]["domain"] = [0., 0.7]
-#            dosbandfig["layout"]["xaxis2"]["domain"] = [0.702, 1.]
-#        elif bs and not dos:
-#            dosbandfig["layout"]["xaxis1"]["domain"] = [0.2, 0.9]
-#        elif dos and not bs:
-#            dosbandfig["layout"]["xaxis2"]["domain"] = [0.4, 0.7]
-#        
-#        return dosbandfig   
+        return dosbandfig
 
 
 if __name__ == '__main__':

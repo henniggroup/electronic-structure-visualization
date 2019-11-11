@@ -127,7 +127,7 @@ app.layout = html.Div([
                      ),
     
             dcc.Dropdown(
-                id='species-dropdown',
+                id='species_dropdown',
                 placeholder='select species',
                 multi=True,
                 style={'display': 'block',
@@ -138,7 +138,7 @@ app.layout = html.Div([
                         ),
 
             dcc.Dropdown(
-                id='orb-dropdown',
+                id='orb_dropdown',
                 placeholder='select orbital',
                 multi=True,
                 style={'display': 'block',
@@ -149,7 +149,7 @@ app.layout = html.Div([
                         ),
             
             dcc.Dropdown(
-                id='suborb-dropdown',
+                id='suborb_dropdown',
                 placeholder='select sub-orbital',
                 multi=True,
                 style={'display': 'block',
@@ -254,36 +254,6 @@ app.layout = html.Div([
 #                   }
 #        ),
     
-
-#    ## this div contains the checklist for selecting element projections
-#    html.Div(['Element(s) to project onto:',
-#        dcc.Checklist(id='select_elem',
-#                      options=[],
-#                      value=[],
-#                      labelStyle={'display': 'block'}
-#                      )
-#        ],
-#        style={'position': 'absolute',
-#               'left': '30%',
-#               'width': '20%'
-#               }
-#        ),
-#
-#    ## this div contains the checklist for selecting orbital projections
-#    html.Div(['Orbitals(s) to project onto:',
-#        dcc.Checklist(id='select_orb',
-#                      options=[{'label': i, 'value': i}
-#                               for i in ['total', 's', 'p', 'd']],
-#                      value=[],
-#                      labelStyle={'display': 'block'}
-#                      )
-#        ],
-#        style={'position': 'absolute',
-#               'left': '50%',
-#               'width': '20%'
-#               }
-#        ),
-    
     ],
     style={'backgroundColor': '#FFFFFF'}
 )
@@ -360,37 +330,38 @@ def get_options_all(vasprun_dos, vasprun_bands):
     
     ## generate the full list of options with sub-orbital projections
     for elem in options:
-        options[elem] = {elem+' Total': None,
+        options[elem] = {elem+' Total': [elem+' Total'],
                          elem+' s': [elem+' s']}
         if Element(elem).block == 'p' or Element(elem).block == 'd':
-            options[elem].update({elem+' p': [elem+' px',elem+' py',elem+' pz']})
+            options[elem].update({elem+' p': [elem+' px',elem+' py',elem+' pz',
+                                              elem+' p summed']})
         if Element(elem).block == 'd':
             options[elem].update({elem+' d': [elem+' dxz',elem+' dyz',elem+' dxy',
-                                              elem+' dx2-y2',elem+' dz2']})
-    options.update({'Total':{'Total': None}})
+                                              elem+' dx2-y2',elem+' dz2', elem+' d summed']})
+#    options.update({'Total':{'Total': None}})
     
     return options
 
     
-@app.callback(Output('species-dropdown', 'options'),
+@app.callback(Output('species_dropdown', 'options'),
               [Input('options', 'children')])  
 def set_elem_options(options):
     return [{'label': i, 'value': i} for i in options]
     
 
-@app.callback(Output('orb-dropdown', 'options'),
+@app.callback(Output('orb_dropdown', 'options'),
               [Input('options', 'children'),
-               Input('species-dropdown', 'value')])
+               Input('species_dropdown', 'value')])
 def set_orb_options(options,selected_species):
     return [{'label': orb, 'value': orb} 
             for sp in selected_species 
             for orb in options[sp]]
 
 
-@app.callback(Output('suborb-dropdown', 'options'),
+@app.callback(Output('suborb_dropdown', 'options'),
               [Input('options', 'children'),
-               Input('species-dropdown', 'value'),
-               Input('orb-dropdown', 'value')])
+               Input('species_dropdown', 'value'),
+               Input('orb_dropdown', 'value')])
 def set_suborb_options(options,selected_species, selected_orb):
     return [{'label': suborb, 'value': suborb}
             for orb in selected_orb
@@ -412,8 +383,9 @@ def set_suborb_options(options,selected_species, selected_orb):
               [Input('submit_button', 'n_clicks'),
                Input('dos_object', 'children'),
                Input('bs_object', 'children')],
-              [State('orb-dropdown', 'value')])
-def update_bandsfig(n_clicks, dos, bs, projlist):
+#              [State('orb_dropdown', 'value')])
+              [State('suborb_dropdown', 'value')])
+def update_dosbandsfig(n_clicks, dos, bs, projlist):
     ## figure updates when the inputs change or the button is clicked
     ## figure does NOT update when elements or orbitals are selected    
     ## de-serialize dos and bs from json format to pymatgen objects
