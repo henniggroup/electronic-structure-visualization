@@ -7,7 +7,7 @@ from pymatgen.electronic_structure.dos import CompleteDos
 from pymatgen.electronic_structure.bandstructure import BandStructureSymmLine
 from pymatgen.core.periodic_table import Element
 
-import plotly.tools as tls
+import chart_studio.tools as tls
 
 import dash
 import dash_core_components as dcc
