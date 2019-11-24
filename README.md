@@ -17,7 +17,7 @@ NEW as of 08/27/2019:
 2. Have the following python packages installed (the latest version of each package that this tool has been tested on is listed in parenthesis): 
 	* numpy (v. 1.17.3)
 	* pymatgen (v. 2019.11.11)
-        * chart_studio
+	* chart_studio
 	* plotly (v. 4.3.0)
 	* dash (v. 1.6.1)
 	* mendeleev (v. 0.4.5)
