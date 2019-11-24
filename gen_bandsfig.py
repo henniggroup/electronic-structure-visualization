@@ -9,8 +9,8 @@ from pymatgen.core.periodic_table import Element
 from pymatgen.electronic_structure.core import Spin, Orbital, OrbitalType
 from pymatgen.electronic_structure.plotter import BSPlotter
 
-import plotly.plotly as pltly      ## plotting functions
-import plotly.tools as tls         ## plotly tools
+import plotly as pltly             ## plotting functions    
+import chart_studio.tools as tls   ## plotly tools
 import plotly.graph_objs as go     ## plot and configuration tools : Scatter, Line, Layout
 from plotly import offline
 import plotly.io as pio
@@ -558,7 +558,7 @@ class BandsFig:
 
     def generate_fig(self, dos, bs, projlist):
                 
-        dosbandfig = tls.make_subplots(rows=1, cols=2, shared_yaxes=True)
+        dosbandfig = pltly.subplots.make_subplots(rows=1, cols=2, shared_yaxes=True)
         
         if bs:
             ## get total band structure
