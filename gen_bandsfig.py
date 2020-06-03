@@ -9,10 +9,10 @@ from pymatgen.core.periodic_table import Element
 from pymatgen.electronic_structure.core import Spin, Orbital, OrbitalType
 from pymatgen.electronic_structure.plotter import BSPlotter
 
-import plotly as pltly             ## plotting functions    
+#import plotly as pltly             ## plotting functions    
 import chart_studio.tools as tls   ## plotly tools
 import plotly.graph_objs as go     ## plot and configuration tools : Scatter, Line, Layout
-from plotly import offline
+from plotly.subplots import make_subplots
 import plotly.io as pio
 
 
@@ -558,7 +558,7 @@ class BandsFig:
 
     def generate_fig(self, dos, bs, projlist):
                 
-        dosbandfig = pltly.subplots.make_subplots(rows=1, cols=2, shared_yaxes=True)
+        dosbandfig = make_subplots(rows=1, cols=2, shared_yaxes=True)
         
         if bs:
             ## get total band structure
@@ -647,30 +647,4 @@ class BandsFig:
         return dosbandfig
 
 
-if __name__ == '__main__':
-    
-    
-    tls.set_credentials_file(username='annemarietan', api_key='373kEaPah9OkvR1HbBha')
-    
-    ## query materials project
-    ## but I can't seem to get the projected band info...
-#    mpr = MPRester("tnS76clmyw18JNre")
-#    dos = mpr.get_dos_by_material_id("mp-2815")
-#    bs = mpr.get_bandstructure_by_material_id("mp-2815") ## MoS2 
-    
-    ## use local test dataset
-    folder = "testdata/MoS2_SCAN/"
-#    dos = Vasprun(folder+"vasprun_dos.xml").complete_dos
-    dos = None
-    bands = Vasprun(folder+"vasprun_bands.xml", parse_projected_eigen = True)
-#    print (dos.efermi,bands.efermi)
-#    bs = bands.get_band_structure(folder+"KPOINTS", line_mode=True, efermi=dos.efermi)
-    bs = bands.get_band_structure(folder+"KPOINTS", line_mode=True, efermi=bands.efermi)
-
-    dosbandfig = BandsFig().generate_fig(dos, bs, ["Mo"], ["d"])
-    
-#    offline.plot(dosbandfig, filename="MoS2_SCAN_bs", image_width=1200, image_height=900, image='png', auto_open=False)
-    
-    pio.write_image(dosbandfig, 'MoS2_SCAN_bs.pdf',width=1200, height=600)
- 
     

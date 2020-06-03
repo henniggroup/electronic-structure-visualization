@@ -116,14 +116,4 @@ class StructFig:
         
         return structfig
 
-
-if __name__ == '__main__':
-    
-
-    folder = "testdata/MoS2/"
-    structure = Vasprun(folder+"vasprun.xml").structures[0]
-    
-    structfig = StructFig().generate_fig(structure)
-    
-    pltly.plot(structfig, filename='unitcell_MoS2')
     

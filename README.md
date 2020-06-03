@@ -15,12 +15,12 @@ NEW as of 08/27/2019:
 ## Installation:
 1. First, you will need to have python installed. We suggest using [anaconda/miniconda](https://conda.io/docs/user-guide/install/index.html)
 2. Have the following python packages installed (the latest version of each package that this tool has been tested on is listed in parenthesis): 
-	* numpy (v. 1.17.3)
-	* pymatgen (v. 2019.11.11)
-	* chart_studio
-	* plotly (v. 4.3.0)
-	* dash (v. 1.6.1)
-	* mendeleev (v. 0.4.5)
+	* numpy (v. 1.18.4)
+	* pymatgen (v. 2019.4.29)
+	* chart_studio (v. 1.0.0)
+	* plotly (v. 4.8.0)
+	* dash (v. 1.12.0)
+	* mendeleev (v. 0.6.0)
 3. Simply download the scripts in this repository and you are good to go!
 
 
