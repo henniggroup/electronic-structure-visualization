@@ -31,13 +31,12 @@ class MyEncoder(json.JSONEncoder):
             return super(MyEncoder, self).default(obj)
         
         
-tls.set_credentials_file(username='annemarietan', api_key='373kEaPah9OkvR1HbBha')
-app = dash.Dash()
+#tls.set_credentials_file(username='annemarietan', api_key='373kEaPah9OkvR1HbBha')
 
-## set fonts
-app.css.append_css({"external_url": "https://codepen.io/chriddyp/pen/bWLwgP.css"})
-mathjax = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML'
-app.scripts.append_script({'external_url': mathjax})
+app = dash.Dash(__name__,
+                external_scripts=['https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML'],
+                external_stylesheets=['https://codepen.io/chriddyp/pen/bWLwgP.css']
+                )
 
 
 app.layout = html.Div([
@@ -71,8 +70,9 @@ app.layout = html.Div([
                      ),
             dcc.Input(id='vasprun_dos',
                       type='text',
-                      value='',
-                      placeholder='input path to vasprun.xml file from DoS calculation',
+#                      value='',
+                      placeholder='input path to vasprun.xml file from DoS calc. + enter/tab',
+                      debounce=True,
                       style={'display': 'block',
                              'height': '30px',
                              'width': '100%',
@@ -84,8 +84,9 @@ app.layout = html.Div([
             
             dcc.Input(id='vasprun_bands',
                       type='text',
-                      value='',
-                      placeholder='input path to vasprun.xml file from bands calculation',
+#                      value='',
+                      placeholder='input path to vasprun.xml file from bands calc. + enter/tab',
+                      debounce=True,
                       style={'display': 'block',
                              'height': '30px',
                              'width': '100%',
@@ -97,8 +98,9 @@ app.layout = html.Div([
             
             dcc.Input(id='kpts_bands',
                       type='text',
-                      value='',
-                      placeholder='input path to KPOINTS file from bands calculation',
+#                      value='',
+                      placeholder='input path to KPOINTS file from bands calc. + enter/tab',
+                      debounce=True,
                       style={'display': 'block',
                              'height': '30px',
                              'width': '100%',
@@ -115,7 +117,7 @@ app.layout = html.Div([
         
         ## hack whitespace between inline-blocks
         html.Div(style={'display': 'inline-block',
-                        'width': '10%'
+                        'width': '5%'
                        }
                 ),
     
@@ -171,7 +173,7 @@ app.layout = html.Div([
     
         ## hack whitespace between inline-blocks
         html.Div(style={'display': 'inline-block',
-                        'width': '10%'
+                        'width': '5%'
                        }
                 ),
         
@@ -181,7 +183,7 @@ app.layout = html.Div([
                     children='Generate plot',
                     style={'display': 'inline-block',
                            'height': '50px',
-                           'width': '10%',
+                           'width': '15%',
                            'verticalAlign': 'bottom'
                            }
                     ),            
@@ -269,7 +271,7 @@ app.layout = html.Div([
         
 @app.callback(Output('dos_object', 'children'),
               [Input('vasprun_dos', 'value')])
-def get_dos(vasprun_dos):       
+def get_dos(vasprun_dos):
     ## get CompleteDos object and "save" in hidden div in json format
     dos = Vasprun(vasprun_dos).complete_dos 
     return json.dumps(dos.as_dict())
@@ -288,7 +290,7 @@ def get_dos(vasprun_dos):
               [Input('dos_object', 'children'),
                Input('vasprun_bands', 'value'),
                Input('kpts_bands', 'value')])
-def get_bs(dos, vasprun_bands, kpts_bands):      
+def get_bs(dos, vasprun_bands, kpts_bands):  
     ## get BandStructureSymmLine object and "save" in hidden div in json format
     bands = Vasprun(vasprun_bands, parse_projected_eigen = True)
     if dos:
@@ -362,7 +364,7 @@ def set_orb_options(options,selected_species):
               [Input('options', 'children'),
                Input('species_dropdown', 'value'),
                Input('orb_dropdown', 'value')])
-def set_suborb_options(options,selected_species, selected_orb):
+def set_suborb_options(options,selected_species,selected_orb):
     return [{'label': suborb, 'value': suborb}
             for orb in selected_orb
             if orb.split()[0] in selected_species

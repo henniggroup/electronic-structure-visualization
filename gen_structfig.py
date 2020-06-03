@@ -1,17 +1,13 @@
 import numpy as np
 from mendeleev import element
 
-from pymatgen.ext.matproj import MPRester
-from pymatgen.io.vasp.outputs import Vasprun
 
-import plotly as pltly             ## plotting functions    
-import chart_studio.tools as tls   ## plotly tools
+#import plotly as pltly             ## plotting functions    
+#import chart_studio.tools as tls   ## plotly tools
 import plotly.graph_objs as go     ## plot and configuration tools : Scatter, Line, Layout
 
 
 class StructFig:
-    
-#    def __init__(self):
         
 
     def get_atomTrace(self, site):
