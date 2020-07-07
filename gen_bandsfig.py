@@ -68,39 +68,57 @@ class BandsFig:
         ## Determine energy ranges for the plots
         cbm, vbm = dos.get_cbm_vbm()
         if cbm-vbm < 0.01:
-            return [-10,10]
+            self.erange_dos = [-10,10]
         else:
-            return [vbm - dos.efermi - 4,
-                    cbm - dos.efermi + 4]
+            self.erange_dos = [vbm - dos.efermi - 4,
+                               cbm - dos.efermi + 4]
             
     
     def get_erange_bs(self, bs):
         
         ## Determine energy ranges for the plots    
         if bs.is_metal():
-            return [-10,10]
+            self.erange_bs = [-10,10]
         else:
-            return [bs.get_vbm()["energy"] - bs.efermi - 4,
-                    bs.get_cbm()["energy"] - bs.efermi + 4]
+            self.erange_bs = [bs.get_vbm()["energy"] - bs.efermi - 4,
+                              bs.get_cbm()["energy"] - bs.efermi + 4]
     
-    
-    def get_bandrange(self, bs, brange=6):
+
+    def get_bandrange(self, bs):
         
         ## set the range of bands to plot
-        ## default is 6 bands above and below band gap         
+        ## based on which show up within the energy window of interest 
         if bs.is_metal():
             bmin = 0
-            bmax = bs.nb_bands        
-        elif bs.is_spin_polarized:
-            bmin = max(bs.get_vbm()["band_index"][Spin.up][0]-brange+1,
-                       bs.get_vbm()["band_index"][Spin.down][0]-brange+1,0)
-            bmax = min(bs.get_cbm()["band_index"][Spin.up][0]+brange,
-                       bs.get_cbm()["band_index"][Spin.down][0]+brange,bs.nb_bands)
+            bmax = bs.nb_bands            
         else:
-            bmin = max(bs.get_vbm()["band_index"][Spin.up][0]-brange+1,0)
-            bmax = min(bs.get_cbm()["band_index"][Spin.up][0]+brange,bs.nb_bands)
-        
-        return [b for b in range(bmin,bmax)]
+            [emin,emax] = self.erange_bs
+            if bs.is_spin_polarized:
+                bvbm = max(bs.get_vbm()["band_index"][Spin.up][0],
+                           bs.get_vbm()["band_index"][Spin.down][0])
+                bcbm = min(bs.get_cbm()["band_index"][Spin.up][0],
+                           bs.get_cbm()["band_index"][Spin.down][0])
+                bmin, bmax = bvbm, bcbm
+                while (bmin > 0 and 
+                       max(bs.bands[Spin.up][bmin]) - bs.efermi > emin or
+                       max(bs.bands[Spin.down][bmin]) - bs.efermi > emin):
+                    bmin -= 1
+                while (bmax < bs.nb_bands and
+                       min(bs.bands[Spin.up][bmax]) - bs.efermi < emax or
+                       min(bs.bands[Spin.down][bmax]) - bs.efermi < emax):
+                    bmax += 1
+            else:
+                bvbm = bs.get_vbm()["band_index"][Spin.up][0]
+                bcbm = bs.get_cbm()["band_index"][Spin.up][0]                
+                bmin, bmax = bvbm, bcbm
+                while (bmin > 0 and 
+                       max(bs.bands[Spin.up][bmin]) - bs.efermi > emin):
+                    bmin -= 1
+                while (bmax < bs.nb_bands and
+                       min(bs.bands[Spin.up][bmax]) - bs.efermi < emax):
+                    bmax += 1
+                
+        self.bandrange = [b for b in range(bmin+1,bmax)]
 
 
     def get_bandsxy(self, bs, bandrange):
@@ -287,19 +305,18 @@ class BandsFig:
         
         ## get simple line plots for the total band structure
 
-        bandrange = self.get_bandrange(bs)
-        [x,yu,yd] = self.get_bandsxy(bs, bandrange)
+        [x,yu,yd] = self.get_bandsxy(bs, self.bandrange)
  
         ## Each band is plotted as a separate trace
         ## and appended to the list bandTraces    
         bandTraces = list()
         ## plot up-spin contributions
-        for b,band in enumerate(bandrange):
+        for b,band in enumerate(self.bandrange):
             bandTraces.append(self.bandTrace(x,yu[b],band,spin='up'))
         bandTraces[-1].showlegend = True  ## show only 1 legend for all traces in the group        
         ## plot down-spin contributions if spin-polarized calculation
         if bs.is_spin_polarized:
-            for b,band in enumerate(bandrange):
+            for b,band in enumerate(self.bandrange):
                 bandTraces.append(self.bandTrace(x,yd[b],band,spin='down'))
             bandTraces[-1].showlegend = True
             
@@ -332,21 +349,20 @@ class BandsFig:
 #        ## colored by relative contribution from each element
 #
 #        self.get_elemcolors(elems)
-#        bandrange = self.get_bandrange(bs)
-#        [x,yu,yd] = self.get_bandsxy(bs, bandrange)
+#        [x,yu,yd] = self.get_bandsxy(bs, self.bandrange)
 #        pbands = bs.get_projection_on_elements()
 # 
 #        ## Each segment of each band is plotted as a separate trace
 #        ## and appended to the list colorbandTraces    
 #        colorbandTraces = list()
 #        ## plot up-spin contributions
-#        for b,band in enumerate(bandrange):
+#        for b,band in enumerate(self.bandrange):
 #            contrib = self.get_el_contrib(x,pbands,band,elems,spin='up')
 #            colorbandTraces.append(self.colorbandTrace(x,yu[b],contrib,band,elems,spin='up'))
 #        colorbandTraces[-1][-1].showlegend = True  ## show only 1 legend for all traces in the group        
 #        ## plot down-spin contributions if spin-polarized calculation
 #        if bs.is_spin_polarized:
-#            for b,band in enumerate(bandrange):
+#            for b,band in enumerate(self.bandrange):
 #                contrib = self.get_el_contrib(x,pbands,band,elems,spin='down')
 #                colorbandTraces.append(self.colorbandTrace(x,yd[b],contrib,band,elems,spin='down'))
 #            colorbandTraces[-1][-1].showlegend = True
@@ -389,20 +405,19 @@ class BandsFig:
         ## get dot plots for the projected band structure
         ## dot sizes proportionl to the relative contribution from that element
         
-        bandrange = self.get_bandrange(bs)
-        [x,yu,yd] = self.get_bandsxy(bs, bandrange) 
+        [x,yu,yd] = self.get_bandsxy(bs, self.bandrange) 
         pbands = bs.get_projection_on_elements()
         
         ## Each band is plotted as a separate scatter trace
         ## and appended to the list fatbandTraces 
         fatbandTraces = list()
         ## plot up-spin contributions
-        for b,band in enumerate(bandrange):
+        for b,band in enumerate(self.bandrange):
             fatbandTraces.append(self.fatbandTrace_el(x,yu[b],pbands,band,elem,'up'))
         fatbandTraces[-1].showlegend = True  ## show only 1 legend for all traces in the group
         ## plot down-spin contributions if spin-polarized calculation
         if bs.is_spin_polarized:
-            for b,band in enumerate(bandrange):
+            for b,band in enumerate(self.bandrange):
                 fatbandTraces.append(self.fatbandTrace_el(x,yd[b],pbands,band,elem,'down'))
             fatbandTraces[-1].showlegend = True
         
@@ -435,20 +450,19 @@ class BandsFig:
         ## get dot plots for the projected band structure
         ## dot sizes proportionl to the relative contribution from that orbital
         
-        bandrange = self.get_bandrange(bs)
-        [x,yu,yd] = self.get_bandsxy(bs, bandrange) 
+        [x,yu,yd] = self.get_bandsxy(bs, self.bandrange) 
         pbands = bs.get_projections_on_elements_and_orbitals({elem: [orb]})
         
         ## Each band is plotted as a separate scatter trace
         ## and appended to the list fatbandTraces 
         fatbandTraces = list() 
         ## plot up-spin contributions
-        for b,band in enumerate(bandrange):
+        for b,band in enumerate(self.bandrange):
             fatbandTraces.append(self.fatbandTrace_spd(x,yu[b],pbands,band,elem,orb,'up'))
         fatbandTraces[-1].showlegend = True  ## show only 1 legend for all traces in the group
         ## plot down-spin contributions if spin-polarized calculation
         if bs.is_spin_polarized:
-            for b,band in enumerate(bandrange):
+            for b,band in enumerate(self.bandrange):
                 fatbandTraces.append(self.fatbandTrace_spd(x,yd[b],pbands,band,elem,orb,'down'))
             fatbandTraces[-1].showlegend = True
         
@@ -561,6 +575,9 @@ class BandsFig:
         dosbandfig = make_subplots(rows=1, cols=2, shared_yaxes=True)
         
         if bs:
+            self.get_erange_bs(bs)
+            self.get_bandrange(bs)
+            
             ## get total band structure
             bandTraces = self.get_bandTraces(bs)
             ## add the total band structure to subplot (1,1)
@@ -583,10 +600,9 @@ class BandsFig:
                         for fbtrace in fatbandTraces:
                             dosbandfig.append_trace(fbtrace, 1, 1)                                         
 
-            ## format axes        
-            erange = self.get_erange_bs(bs)
+            ## format axes
             labels_uniq, labelspos_uniq = self.get_kpt_labels(bs)
-            bandLayout = self.layout_bands(erange, labels_uniq, labelspos_uniq)            
+            bandLayout = self.layout_bands(self.erange_bs, labels_uniq, labelspos_uniq)            
             dosbandfig["layout"].update(
                 go.Layout(
                     title="Band structure",
@@ -596,6 +612,8 @@ class BandsFig:
             )
                         
         if dos:
+            self.get_erange_dos(dos)
+            
             ## add total density of states
             dosTraces = self.get_dosTraces_tot(dos)
             ## add the densities to subplot (1,2)
@@ -627,7 +645,7 @@ class BandsFig:
                 )
             )            
             if not bs:
-                dosLayout["yaxis"].range = self.get_erange_dos(dos)
+                dosLayout["yaxis"].range = self.erange_dos
                 dosbandfig["layout"].update(
                     go.Layout(
                         title="Density of states",
