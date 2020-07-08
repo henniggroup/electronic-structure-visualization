@@ -8,8 +8,6 @@ from pymatgen.electronic_structure.bandstructure import BandStructureSymmLine
 from pymatgen.core.periodic_table import Element
 #from pymatgen.ext.matproj import MPRester
 
-import chart_studio.tools as tls
-
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -70,6 +68,7 @@ app.layout = html.Div([
                      style={'display': 'block'
                             }
                      ),
+            
             dcc.Input(id='vasprun_dos',
                       type='text',
 #                      value='',
@@ -109,7 +108,15 @@ app.layout = html.Div([
                              'borderWidth': '1px',
                              'textAlign': 'center'
                              }
-                      )
+                      ),
+            
+            ## dcc.Store components are used to store JSON data in the browser
+            ## (replace the "hidden Div" hack)
+            dcc.Store(id='dos_object'),  ## pymatgen dos object
+            dcc.Store(id='bs_object'),  ## pymatgen bs object
+            dcc.Store(id='struct_object'),  ## pymatgen structure object
+            dcc.Store(id='options'),  ## full dict of element/orbital options
+            
                 ],
                 style={'display': 'inline-block',
                        'width': '30%',
@@ -129,7 +136,7 @@ app.layout = html.Div([
                      style={'display': 'block'
                             }
                      ),
-    
+            
             dcc.Dropdown(
                 id='species_dropdown',
                 placeholder='select species',
@@ -162,10 +169,6 @@ app.layout = html.Div([
                        'borderWidth': '1px'}
                         ),
             
-#            html.Div(id='display-selected-values',
-#                     style={'display': 'block'
-#                            }
-#                     ),
                 ],
                 style={'display': 'inline-block',
                        'width': '30%',
@@ -213,21 +216,6 @@ app.layout = html.Div([
 #                     'textAlign': 'center'}
 #              ),
 
-
-    ## hidden div used to store the full dict of options
-    html.Div(id='options', 
-             style={'display': 'none'}),
-    
-    ## hidden divs used to store structure, dos, and bs objects
-    html.Div(id='struct_object', 
-             style={'display': 'none'}),
-                 
-    html.Div(id='dos_object', 
-             style={'display': 'none'}),
-             
-    html.Div(id='bs_object', 
-             style={'display': 'none'}),
-
     html.Div([
         ## our simple clickable structure figure!
         dcc.Graph(id='unitcell',
@@ -274,7 +262,7 @@ app.layout = html.Div([
 ## Dash passes the new value of the input property to the function
 ## and updates the output property with whatever was returned by the function.
         
-@app.callback(Output('dos_object', 'children'),
+@app.callback(Output('dos_object', 'data'),
               [Input('vasprun_dos', 'value')])
 def get_dos(vasprun_dos):
     ## get CompleteDos object and "save" in hidden div in json format
@@ -291,8 +279,8 @@ def get_dos(vasprun_dos):
 #    return json.dumps(dos.as_dict())
 
 
-@app.callback(Output('bs_object', 'children'),
-              [Input('dos_object', 'children'),
+@app.callback(Output('bs_object', 'data'),
+              [Input('dos_object', 'data'),
                Input('vasprun_bands', 'value'),
                Input('kpts_bands', 'value')])
 def get_bs(dos, vasprun_bands, kpts_bands):  
@@ -315,7 +303,7 @@ def get_bs(dos, vasprun_bands, kpts_bands):
 #    return json.dumps(bs.as_dict(), cls=MyEncoder)
 
 
-@app.callback(Output('struct_object', 'children'),
+@app.callback(Output('struct_object', 'data'),
               [Input('vasprun_dos', 'value'),
                Input('vasprun_bands', 'value')])
 def get_structure(vasprun_dos, vasprun_bands):
@@ -327,8 +315,8 @@ def get_structure(vasprun_dos, vasprun_bands):
     return json.dumps(structure.as_dict())
 
 
-@app.callback(Output('options', 'children'),
-              [Input('struct_object', 'children')])  
+@app.callback(Output('options', 'data'),
+              [Input('struct_object', 'data')])  
 def get_options_all(struct):    
     ## determine full list of options and store in hidden div
     
@@ -361,13 +349,13 @@ def get_options_all(struct):
 
     
 @app.callback(Output('species_dropdown', 'options'),
-              [Input('options', 'children')])  
+              [Input('options', 'data')])  
 def set_elem_options(options):
     return [{'label': i, 'value': i} for i in options]
     
 
 @app.callback(Output('orb_dropdown', 'options'),
-              [Input('options', 'children'),
+              [Input('options', 'data'),
                Input('species_dropdown', 'value')])
 def set_orb_options(options,selected_species):
     return [{'label': orb, 'value': orb} 
@@ -376,7 +364,7 @@ def set_orb_options(options,selected_species):
 
 
 @app.callback(Output('suborb_dropdown', 'options'),
-              [Input('options', 'children'),
+              [Input('options', 'data'),
                Input('species_dropdown', 'value'),
                Input('orb_dropdown', 'value')])
 def set_suborb_options(options,selected_species,selected_orb):
@@ -386,20 +374,10 @@ def set_suborb_options(options,selected_species,selected_orb):
             for suborb in options[orb.split()[0]][orb]]
 
 
-#@app.callback(
-#    dash.dependencies.Output('display-selected-values', 'children'),
-#    [dash.dependencies.Input('suborb-dropdown', 'value')])
-#def set_display_children(selected_suborb):
-#    if len(selected_suborb) > 0:       
-#        return '{} sub-orbital projections have been selected'.format(selected_suborb)
-#    else:       
-#        return 'No sub-orbital projections have been selected'
-
-
 @app.callback(Output('DOS_bands', 'figure'),
               [Input('submit_button', 'n_clicks'),
-               Input('dos_object', 'children'),
-               Input('bs_object', 'children')],
+               Input('dos_object', 'data'),
+               Input('bs_object', 'data')],
 #              [State('orb_dropdown', 'value')])
               [State('suborb_dropdown', 'value')])
 def update_dosbandsfig(n_clicks, dos, bs, projlist):
@@ -433,7 +411,7 @@ def update_dosbandsfig(n_clicks, dos, bs, projlist):
 
 
 @app.callback(Output('unitcell', 'figure'),
-              [Input('struct_object', 'children')])  
+              [Input('struct_object', 'data')])  
 def update_structfig(struct):
     ## de-serialize structure from json format to pymatgen object
     structure = Structure.from_dict(json.loads(struct))

@@ -1,14 +1,11 @@
 import numpy as np
 from mendeleev import element
 
-
-#import plotly as pltly             ## plotting functions    
-#import chart_studio.tools as tls   ## plotly tools
-import plotly.graph_objs as go     ## plot and configuration tools : Scatter, Line, Layout
+import plotly.graph_objs as go
 
 
 class StructFig:
-        
+       
 
     def get_atomTrace(self, site):
        

@@ -3,17 +3,13 @@ import numpy as np
 
 import suborb_utils as sub
 
-from pymatgen.ext.matproj import MPRester
-from pymatgen.io.vasp.outputs import Vasprun
+#from pymatgen.ext.matproj import MPRester
 from pymatgen.core.periodic_table import Element
 from pymatgen.electronic_structure.core import Spin, Orbital, OrbitalType
 from pymatgen.electronic_structure.plotter import BSPlotter
 
-#import plotly as pltly             ## plotting functions    
-import chart_studio.tools as tls   ## plotly tools
-import plotly.graph_objs as go     ## plot and configuration tools : Scatter, Line, Layout
+import plotly.graph_objs as go
 from plotly.subplots import make_subplots
-import plotly.io as pio
 
 
 class BandsFig:
