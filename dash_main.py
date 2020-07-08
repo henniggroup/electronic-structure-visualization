@@ -1,11 +1,12 @@
 import json
 import numpy as np
 
-from pymatgen.ext.matproj import MPRester
+from pymatgen import Structure
 from pymatgen.io.vasp.outputs import Vasprun
 from pymatgen.electronic_structure.dos import CompleteDos
 from pymatgen.electronic_structure.bandstructure import BandStructureSymmLine
 from pymatgen.core.periodic_table import Element
+#from pymatgen.ext.matproj import MPRester
 
 import chart_studio.tools as tls
 
@@ -33,10 +34,11 @@ class MyEncoder(json.JSONEncoder):
         
 #tls.set_credentials_file(username='annemarietan', api_key='373kEaPah9OkvR1HbBha')
 
-app = dash.Dash(__name__,
-                external_scripts=['https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML'],
-                external_stylesheets=['https://codepen.io/chriddyp/pen/bWLwgP.css']
-                )
+app = dash.Dash()
+#app = dash.Dash(__name__,
+#                external_scripts=['https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML'],
+#                external_stylesheets=['https://codepen.io/chriddyp/pen/bWLwgP.css']
+#                )
 
 
 app.layout = html.Div([
@@ -216,7 +218,10 @@ app.layout = html.Div([
     html.Div(id='options', 
              style={'display': 'none'}),
     
-    ## hidden divs used to store dos and bs objects
+    ## hidden divs used to store structure, dos, and bs objects
+    html.Div(id='struct_object', 
+             style={'display': 'none'}),
+                 
     html.Div(id='dos_object', 
              style={'display': 'none'}),
              
@@ -310,15 +315,25 @@ def get_bs(dos, vasprun_bands, kpts_bands):
 #    return json.dumps(bs.as_dict(), cls=MyEncoder)
 
 
-@app.callback(Output('options', 'children'),
+@app.callback(Output('struct_object', 'children'),
               [Input('vasprun_dos', 'value'),
-               Input('vasprun_bands', 'value')])  
-def get_options_all(vasprun_dos, vasprun_bands):
-    
+               Input('vasprun_bands', 'value')])
+def get_structure(vasprun_dos, vasprun_bands):
+    ## get structure object and "save" in hidden div in json format
+    if vasprun_dos: 
+        structure = Vasprun(vasprun_dos).structures[-1]
+    elif vasprun_bands: 
+        structure = Vasprun(vasprun_bands).structures[-1]
+    return json.dumps(structure.as_dict())
+
+
+@app.callback(Output('options', 'children'),
+              [Input('struct_object', 'children')])  
+def get_options_all(struct):    
     ## determine full list of options and store in hidden div
-    if vasprun_dos: vasprun = vasprun_dos
-    elif vasprun_bands: vasprun = vasprun_bands
-    structure = Vasprun(vasprun).structures[-1]  
+    
+    ## de-serialize structure from json format to pymatgen object
+    structure = Structure.from_dict(json.loads(struct))
     
     ## determine if sub-orbital projections exist. If so, set lm = True  
 #    orbs = [Orbital.__str__(orb) for atom_dos in vasprun.complete_dos.pdos.values()
@@ -418,13 +433,11 @@ def update_dosbandsfig(n_clicks, dos, bs, projlist):
 
 
 @app.callback(Output('unitcell', 'figure'),
-              [Input('vasprun_dos', 'value'),
-               Input('vasprun_bands', 'value')])  
-def update_structfig(vasprun_dos, vasprun_bands):
+              [Input('struct_object', 'children')])  
+def update_structfig(struct):
+    ## de-serialize structure from json format to pymatgen object
+    structure = Structure.from_dict(json.loads(struct))
     ## Generate our simple structure figure
-    if vasprun_dos: vasprun = vasprun_dos
-    elif vasprun_bands: vasprun = vasprun_bands
-    structure = Vasprun(vasprun).structures[-1]
     structfig = StructFig().generate_fig(structure)
     return structfig
 
