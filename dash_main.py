@@ -6,7 +6,6 @@ from pymatgen.io.vasp.outputs import Vasprun
 from pymatgen.electronic_structure.dos import CompleteDos
 from pymatgen.electronic_structure.bandstructure import BandStructureSymmLine
 from pymatgen.core.periodic_table import Element
-#from pymatgen.ext.matproj import MPRester
 
 import dash
 import dash_core_components as dcc
@@ -29,27 +28,23 @@ class MyEncoder(json.JSONEncoder):
         else:
             return super(MyEncoder, self).default(obj)
         
-        
-#tls.set_credentials_file(username='annemarietan', api_key='373kEaPah9OkvR1HbBha')
+
 
 app = dash.Dash()
-#app = dash.Dash(__name__,
-#                external_scripts=['https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML'],
-#                external_stylesheets=['https://codepen.io/chriddyp/pen/bWLwgP.css']
-#                )
 
 
 app.layout = html.Div([
     
     html.H3('Interactive Electronic Structure Visualization Tool',
             style={'textAlign': 'center',
-                   'color': '#0021A5'
+                   'color': '#fcb040',
+                   'marginBottom': '5px'
                    }
             ), 
 
-    html.Div('currently a work in progress by Anne Marie Tan :)',
+    html.Div('developed by Anne Marie Tan',
              style={'textAlign': 'center',
-                    'color': '#FA4616',
+                    'color': '#454343',
                     'marginBottom': '20px'
                    }
             ),
@@ -64,14 +59,13 @@ app.layout = html.Div([
         
         ## boxes to input path to local data
         html.Div([
-            html.Div('From local data:',
+            html.Div('From data stored locally:',
                      style={'display': 'block'
                             }
                      ),
             
             dcc.Input(id='vasprun_dos',
                       type='text',
-#                      value='',
                       placeholder='input path to vasprun.xml file from DoS calc. + enter/tab',
                       debounce=True,
                       style={'display': 'block',
@@ -85,7 +79,6 @@ app.layout = html.Div([
             
             dcc.Input(id='vasprun_bands',
                       type='text',
-#                      value='',
                       placeholder='input path to vasprun.xml file from bands calc. + enter/tab',
                       debounce=True,
                       style={'display': 'block',
@@ -99,7 +92,6 @@ app.layout = html.Div([
             
             dcc.Input(id='kpts_bands',
                       type='text',
-#                      value='',
                       placeholder='input path to KPOINTS file from bands calc. + enter/tab',
                       debounce=True,
                       style={'display': 'block',
@@ -188,57 +180,49 @@ app.layout = html.Div([
                     children='Generate plot',
                     style={'display': 'inline-block',
                            'height': '50px',
-                           'width': '15%',
+                           'width': '10%',
                            'verticalAlign': 'bottom'
                            }
-                    ),            
+                    ),
             ],
             style={'display': 'block',
                    'marginBottom': '20px'
                    }
             ),
-    
-#    html.Div('From Materials Project data:',
-#             style={'marginLeft': '50'
-#                   }
-#            ),
-#    
-#    dcc.Input(id='mpid',
-#              type='text',
-#              value='',
-#              placeholder='input Materials Project id: mp-###',
-#              style={'display': 'block',
-#                     'width': '30%',
-#                     'height': '30px',
-#                     'marginLeft': '50',
-#                     'marginBottom': '5',
-#                     'borderWidth': '1px',
-#                     'textAlign': 'center'}
-#              ),
 
-    html.Div([
-        ## our simple clickable structure figure!
-        dcc.Graph(id='unitcell',
-                  figure={'data': []},
-                  style={'display': 'inline-block',
-                         'width': '30%',
-                         'height': '100%'
-                         }
-                  ),
-    
-        ## our interactive bands+dos figure!
-        dcc.Graph(id='DOS_bands',
-                  figure={'data': []},
-                  style={'display': 'inline-block',
-                         'width': '65%',
-                         'height': '100%'
-                         }
-                  ),
+
+    html.Div([dcc.Loading(id="loading",
+                          type="dot",
+                          children=html.Div([
+                                  
+                                ## our simple clickable structure figure!
+                                dcc.Graph(id='unitcell',
+                                          figure={'data': []},
+                                          style={'display': 'inline-block',
+                                                 'width': '30%',
+                                                 'height': '100%'
+                                                 }
+                                          ),
+                                
+                                ## our interactive bands+dos figure!
+                                dcc.Graph(id='DOS_bands',
+                                          figure={'data': []},
+                                          style={'display': 'inline-block',
+                                                 'width': '65%',
+                                                 'height': '100%'
+                                                 }
+                                          ),
+                                ],
+                                style={'display': 'block',
+                                       'height': '600px'
+                                       }
+                                ),
+                         ),   
             ],
             style={'display': 'block',
                    'height': '600px'
                    }
-            ),
+            ),        
 
     ## this div tells which atom was selected (temporary)
 #    html.Div(id='select_atom',
@@ -250,7 +234,8 @@ app.layout = html.Div([
 #        ),
     
     ],
-    style={'backgroundColor': '#FFFFFF'}
+    style={'backgroundColor': '#FFFFFF',
+           'fontFamily': 'arial'}
 )
 
 
@@ -270,15 +255,6 @@ def get_dos(vasprun_dos):
     return json.dumps(dos.as_dict())
 
 
-#@app.callback(Output('dos_object', 'children'),
-#              [Input('mpid', 'value')])
-#def get_dos_mp(mpid):       
-#    ## get CompleteDos object and "save" in hidden div in json format
-#    mpr = MPRester("tnS76clmyw18JNre")
-#    dos = mpr.get_dos_by_material_id(mpid)
-#    return json.dumps(dos.as_dict())
-
-
 @app.callback(Output('bs_object', 'data'),
               [Input('dos_object', 'data'),
                Input('vasprun_bands', 'value'),
@@ -292,15 +268,6 @@ def get_bs(dos, vasprun_bands, kpts_bands):
     else:
         bs = bands.get_band_structure(kpts_bands, line_mode=True) 
     return json.dumps(bs.as_dict(), cls=MyEncoder)
-
-
-#@app.callback(Output('bs_object', 'children'),
-#              [Input('mpid', 'value')])
-#def get_bs_mp(mpid):      
-#    ## get BandStructureSymmLine object and "save" in hidden div in json format
-#    mpr = MPRester("tnS76clmyw18JNre")
-#    bs = mpr.get_bandstructure_by_material_id(mpid)   
-#    return json.dumps(bs.as_dict(), cls=MyEncoder)
 
 
 @app.callback(Output('struct_object', 'data'),
@@ -434,6 +401,7 @@ def update_structfig(struct):
 
 
 if __name__ == '__main__':
+    
     
     app.run_server(debug=False)
     
