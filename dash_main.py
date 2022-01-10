@@ -1,15 +1,14 @@
 import json
 import numpy as np
 
-from pymatgen import Structure
+from pymatgen.core import Structure
 from pymatgen.io.vasp.outputs import Vasprun
 from pymatgen.electronic_structure.dos import CompleteDos
 from pymatgen.electronic_structure.bandstructure import BandStructureSymmLine
 from pymatgen.core.periodic_table import Element
 
 import dash
-import dash_core_components as dcc
-import dash_html_components as html
+from dash import dcc, html
 from dash.dependencies import Input, Output, State
 
 from gen_structfig import StructFig

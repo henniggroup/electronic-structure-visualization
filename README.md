@@ -1,31 +1,36 @@
 # Full electronic structure visualization tool
 
-This is an ongoing effort to develop an interactive tool for visualizing full electronic structures of materials. It is in its very early stages so there will probably be bugs, so please be patient! Please send any questions or feedback to Anne Marie at annemarietan@ufl.edu :smiley:.
+This is a simple interactive tool for visualizing full electronic structures of materials. Unfortunately, it is no longer being actively maintained :frowning_face: Updates for compatibility with major package updates may come sporadically, but don't count on it...
+
+An online version of this tool is also available on the [MaterialsWeb website](https://materialsweb.org/electronic_visualization).
 
 ![screenshot of visualization tool](https://github.com/henniggroup/electronic-structure-visualization/blob/master/screenshot2.png)
 
+UPDATE as of 01/10/2022:
+* Updated to be compatible with pymatgen v. 2020.*, dash v. 2.0.0, plotly v. 5.1.0
+
 NEW as of 11/11/2019:
-* Implemented sub-orbital projections for the density of states plot! Sub-orbital projections for the band structure plot coming soon...
+* Implemented sub-orbital projections for the density of states plot!
 
 NEW as of 08/27/2019:
 * Changed the method for selecting elements and orbitals for projection -- responsive dropdown lists enable users to select specific element + orbital combinations easily
-* compatible with Dash v1.0
 
 
 ## Installation:
 1. First, you will need to have python installed. We suggest using [anaconda/miniconda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/)
-2. Have the following python packages installed (the latest version of each package that this tool has been tested on is listed in parenthesis): 
-	* numpy (v. 1.18.4)
-	* pymatgen (v. 2019.4.29)
+2. Install the following python packages via either conda or pip (the latest version of each package that this tool has been tested on is listed in parenthesis): 
+	* numpy (v. 1.21.2)
+	* pymatgen (v. 2022.0.14)
 	* chart_studio (v. 1.0.0)
-	* plotly (v. 4.8.0)
-	* dash (v. 1.12.0)
-	* mendeleev (v. 0.6.0)
+	* plotly (v. 5.1.0)
+	* dash (v. 2.0.0)
+	* mendeleev (v. 0.9.0)
+	* sqlalchemy (v. 1.4.27)
 3. Simply download the scripts in this repository and you are good to go!
 
 
 ## Running the python script:
-1. Run `python dash_test.py` from the command line.
+1. Run `python dash_main.py` from the command line.
 2. Open your local server. 
 
 
